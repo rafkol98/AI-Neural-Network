@@ -1,0 +1,7 @@
+Please use this StarterCode folder for your submission. 
+
+Simply rename "StarterCode" with your student ID and submit the folder as a .zip file. Please do not alternate the structure of the folder.
+
+The report should be placed in this folder, and it must be in .pdf format.
+
+Make sure that your code can be built using the build.sh script, and can be run correctly with the example command in run.sh (but feel free to add extra arguments at the end of the command if desired).
