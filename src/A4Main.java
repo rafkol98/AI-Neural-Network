@@ -37,7 +37,7 @@ public class A4Main {
         Logger.getLogger().setLevel(Logger.WARNING);
 
 
-        double learningRate = 0.1;
+        double learningRate = 2;
         int batchsize = 50;
         int maxEpochs = 500;
         int patience = 10;
@@ -83,6 +83,7 @@ public class A4Main {
 
         // train network
         System.out.println("\nTraining...");
+
         train(net, loss, sgd, trainset, devset, maxEpochs, patience);
 
         // perform on test set
@@ -92,7 +93,7 @@ public class A4Main {
 
 
     /**
-     * Convert a mini-batch of MNIST dataset to data structure that can be used by the network
+     * Convert a mini-batch of the vocabulary dataset to data structure that can be used by the network
      * @param batch a list of MNIST items, each of which is a pair of (input image, output label)
      * @return two DoubleMatrix objects: X (input) and Y (labels)
      */
@@ -115,7 +116,7 @@ public class A4Main {
     /**
      * calculate classification accuracy of an ANN on a given dataset.
      * @param net an ANN model
-     * @param data an MNIST dataset
+     * @param data the vocabulary dataset
      * @return the classification accuracy value (double, in the range of [0,1])
      */
     public static double eval(Layer net, VocabDataset data) {
@@ -152,7 +153,7 @@ public class A4Main {
 
     //TODO: change!
     /**
-     * train an ANN for MNIST
+     * train an ANN for our NLP problem.
      * @param net an ANN model to be trained
      * @param loss a loss function object
      * @param optimizer the optimizer used for updating the model's weights (currently only SGD is supported)
@@ -163,6 +164,8 @@ public class A4Main {
      */
     public static void train(Layer net, Loss loss, Optimizer optimizer, VocabDataset traindata,
                              VocabDataset devdata, int nEpochs, int patience) {
+        long startTime = System.nanoTime(); // start timer.
+
         int notAtPeak = 0;  // the number of times not at peak
         double peakAcc = -1;  // the best accuracy of the previous epochs
         double totalLoss = 0;  // the total loss of the current epoch
@@ -212,7 +215,13 @@ public class A4Main {
                 break;
         }
 
+        long endTime = System.nanoTime(); // stop timer.
+
+        // calculate training duration - divide by 10^-9 to convert ns to seconds.
+        long trainingDuration = (endTime - startTime) / 1000000000;
+
         System.out.println("\ntraining is finished");
+        System.out.println("Total training time: "+ trainingDuration +" seconds");
     }
 
 }
