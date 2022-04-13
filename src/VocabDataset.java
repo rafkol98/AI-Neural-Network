@@ -13,8 +13,15 @@ import java.util.stream.Collectors;
 public class VocabDataset  extends Dataset<double[], Integer> {
 
     // number of input features
-    //TODO: think about this. features or instances?
     int inputDims;
+
+    /**
+     * Get the number of input dimensions.
+     * @return the number of input dimensions.
+     */
+    public int getInputDims() {
+        return inputDims;
+    }
 
     /**
      * Constructor for VocabDataset.
@@ -40,7 +47,7 @@ public class VocabDataset  extends Dataset<double[], Integer> {
 
         // get the number of instances (elements) and number of features.
         int instances = countLinesInFile(path);
-        int noFeatures = countLinesInFile(pathVocabulary);
+        inputDims = countLinesInFile(pathVocabulary);
 
         FileReader fr = new FileReader(path);
         BufferedReader br = new BufferedReader(fr);
@@ -51,7 +58,7 @@ public class VocabDataset  extends Dataset<double[], Integer> {
             String locations = line[0]; // get all the locations (indexes) of the words.
 
             // get the one-hot encoded values and the y value for the current instance.
-            double[] encoded = oneHotEncode(noFeatures, locations);
+            double[] encoded = oneHotEncode(inputDims, locations);
             int y = Integer.valueOf(line[1]);
 
             items.add(new Pair<double[], Integer>(encoded, y));
@@ -75,7 +82,7 @@ public class VocabDataset  extends Dataset<double[], Integer> {
     }
 
     /**
-     * One hot encode the given instance.
+     * One hot encode the given instance - Bag-of-Word strategy.
      * @param noFeatures the number of features in the current dataset.
      * @param locations the locations of where we will place a one.
      * @return the one-hot encoded double array.
@@ -91,7 +98,7 @@ public class VocabDataset  extends Dataset<double[], Integer> {
         // update zeros with 1 at all the indexes of elements.
         for (int i=0; i<encoded.size(); i++) {
             if (indexes.contains(i)) {
-                encoded.add(i, 1);
+                encoded.set(i, 1);
             }
         }
 

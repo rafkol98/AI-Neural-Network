@@ -12,6 +12,7 @@ import org.jblas.DoubleMatrix;
 import org.jblas.util.Logger;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import src.EmbeddingBag;
@@ -43,42 +44,50 @@ public class A4Main {
         int hiddimsFirst = 100;
         int hiddimsOthers = 200;
 
-
-
         // load datasets
         System.out.println("\nLoading data...");
-//        VocabDataset trainset = new VocabDataset(batchsize, true, rnd);
-//        trainset.fromFile(args[2]);
-//        VocabDataset devset = new VocabDataset(batchsize, false, rnd);
-//        devset.fromFile(args[3]);
+        VocabDataset trainset = new VocabDataset(batchsize, true, rnd);
+        trainset.fromFile(args[2], args[5]);
+
+        VocabDataset devset = new VocabDataset(batchsize, false, rnd);
+        devset.fromFile(args[3], args[5]);
+
         VocabDataset testset = new VocabDataset(batchsize, false, rnd);
         testset.fromFile(args[4], args[5]);
-//
-//        System.out.printf("train: %d instances\n", trainset.getSize());
-//        System.out.printf("dev: %d instances\n", devset.getSize());
-//        System.out.printf("test: %d instances\n", testset.getSize());
-//
-//        // create a network
-//        System.out.println("\nCreating network...");
-//        int indims = trainset.getInputDims();
-//        int outdims = 10;
-//        Sequential net = new Sequential(new Layer[] {
-//                // Input to first hidden layer.
-//                new Linear(indims, hiddimsFirst, new WeightInitXavier()),
-//                new ReLU(),
-//                // first to second hidden layer.
-//                new Linear(hiddimsFirst, hiddimsOthers, new WeightInitXavier()),
-//                new ReLU(),
-//                // second to third hidden layer.
-//                new Linear(hiddimsOthers, hiddimsOthers, new WeightInitXavier()),
-//                new ReLU(),
-//                // third hidden layer to output.
-//                new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
-//                new Softmax()});
-//
-//        CrossEntropy loss = new CrossEntropy();
-//        Optimizer sgd = new SGD(net, learningRate);
-//        System.out.println(net);
+
+        System.out.printf("train: %d instances\n", trainset.getSize());
+        System.out.printf("dev: %d instances\n", devset.getSize());
+        System.out.printf("test: %d instances\n", testset.getSize());
+
+        // create a network
+        System.out.println("\nCreating network...");
+        int indims = trainset.getInputDims();
+        int outdims = 50;
+        Sequential net = new Sequential(new Layer[] {
+                // Input to first hidden layer.
+                new Linear(indims, hiddimsFirst, new WeightInitXavier()),
+                new ReLU(),
+                // first to second hidden layer.
+                new Linear(hiddimsFirst, hiddimsOthers, new WeightInitXavier()),
+                new ReLU(),
+                // second to third hidden layer.
+                new Linear(hiddimsOthers, hiddimsOthers, new WeightInitXavier()),
+                new ReLU(),
+                // third hidden layer to output.
+                new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
+                new Softmax()});
+
+        CrossEntropy loss = new CrossEntropy();
+        Optimizer sgd = new SGD(net, learningRate);
+        System.out.println(net);
+
+        // train network
+        System.out.println("\nTraining...");
+        train(net, loss, sgd, trainset, devset, maxEpochs, patience);
+
+        // perform on test set
+        double testAcc = eval(net, testset);
+        System.out.printf("\nTest accuracy: %.4f\n", testAcc);
     }
 
 
@@ -109,7 +118,7 @@ public class A4Main {
      * @param data an MNIST dataset
      * @return the classification accuracy value (double, in the range of [0,1])
      */
-    public static double eval(Layer net, MNISTDataset data) {
+    public static double eval(Layer net, VocabDataset data) {
         // reset index of the data
         data.reset();
 
@@ -152,8 +161,8 @@ public class A4Main {
      * @param nEpochs the maximum number of training epochs
      * @param patience the maximum number of consecutive epochs where validation performance is allowed to non-increased, used for early stopping
      */
-    public static void train(Layer net, Loss loss, Optimizer optimizer, MNISTDataset traindata,
-                             MNISTDataset devdata, int nEpochs, int patience) {
+    public static void train(Layer net, Loss loss, Optimizer optimizer, VocabDataset traindata,
+                             VocabDataset devdata, int nEpochs, int patience) {
         int notAtPeak = 0;  // the number of times not at peak
         double peakAcc = -1;  // the best accuracy of the previous epochs
         double totalLoss = 0;  // the total loss of the current epoch
