@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 public class VocabDataset  extends Dataset<double[], Integer> {
 
     // number of input features
+    //TODO: think about this. features or instances?
     int inputDims;
 
     /**
@@ -32,39 +33,39 @@ public class VocabDataset  extends Dataset<double[], Integer> {
 
 
     /**
-     * Load MNIST data from file and vocabulary.
+     * Load data from file and vocabulary.
      */
     public void fromFile(String path, String pathVocabulary) throws IOException {
         items = new ArrayList<Pair<double[], Integer>>();
 
-        System.out.println("here"+items.size());
-
-
-
-        // the number of features and dimensions are equal.
-        //TODO: improve!
+        // get the number of instances (elements) and number of features.
         int instances = countLinesInFile(path);
         int noFeatures = countLinesInFile(pathVocabulary);
 
-        System.out.println("instances: "+instances + " , features: "+ noFeatures);
         FileReader fr = new FileReader(path);
         BufferedReader br = new BufferedReader(fr);
 
-        for (int i = 0; i < 5; i++) {
+        // iterate through all the instances
+        for (int i = 0; i < instances; i++) {
             String[] line = br.readLine().split(" ; ");
             String locations = line[0]; // get all the locations (indexes) of the words.
+
+            // get the one-hot encoded values and the y value for the current instance.
+            double[] encoded = oneHotEncode(noFeatures, locations);
             int y = Integer.valueOf(line[1]);
-            System.out.println(locations + " y:"+y);
-            ArrayList<Integer> encoded = oneHotEncode(noFeatures, locations);
 
-            System.out.println(encoded.toString());
-
+            items.add(new Pair<double[], Integer>(encoded, y));
         }
-
         br.close();
     }
 
 
+    /**
+     * Count the lines in a given file.
+     * @param path the path of the file.
+     * @return the number of lines.
+     * @throws IOException
+     */
     public int countLinesInFile(String path) throws IOException {
         BufferedReader br = new BufferedReader( new FileReader(path));
         int lines = 0;
@@ -73,7 +74,13 @@ public class VocabDataset  extends Dataset<double[], Integer> {
         return lines;
     }
 
-    public ArrayList<Integer> oneHotEncode(int noFeatures, String locations) {
+    /**
+     * One hot encode the given instance.
+     * @param noFeatures the number of features in the current dataset.
+     * @param locations the locations of where we will place a one.
+     * @return the one-hot encoded double array.
+     */
+    public double[] oneHotEncode(int noFeatures, String locations) {
         // initialise with noFeatures of zeros.
         ArrayList<Integer> encoded = new ArrayList<Integer>(Collections.nCopies(noFeatures, 0));
         // Get all the indexes of the items in a list.
@@ -87,6 +94,8 @@ public class VocabDataset  extends Dataset<double[], Integer> {
                 encoded.add(i, 1);
             }
         }
-        return encoded;
+
+        // Convert to double array and return.
+        return encoded.stream().mapToDouble(Integer::doubleValue).toArray();
     }
 }
