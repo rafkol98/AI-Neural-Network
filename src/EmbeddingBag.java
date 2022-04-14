@@ -25,7 +25,8 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
      * @param wInit (WeightInit) weight initialisation method
      */
     public EmbeddingBag(int vocabSize, int outdims, WeightInit wInit) {
-        // YOUR CODE HERE
+        this.W = wInit.generate(vocabSize, outdims);
+        this.gW = DoubleMatrix.zeros(vocabSize, outdims);
     }
 
     /**

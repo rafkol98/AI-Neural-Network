@@ -15,67 +15,124 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+
 import src.EmbeddingBag;
 
 public class A4Main {
 
     /**
-     * Example A4Main class. Feel free to edit this file 
+     * Example A4Main class. Feel free to edit this file
      */
     public static void main(String[] args) throws IOException {
-        if (args.length < 6){
+        if (args.length < 6) {
             System.out.println("Usage: java A4Main <part1/part2/part3/part4> <seed> <trainFile> <devFile> <testFile> <vocabFile> <classesFile>");
             return;
-        }        
+        }
 
         // set jblas random seed (for reproducibility)
         int seed = Integer.parseInt(args[1]);
-		org.jblas.util.Random.seed(seed);
-		Random rnd = new Random(seed);
-		
+        org.jblas.util.Random.seed(seed);
+        Random rnd = new Random(seed);
+
         // turn off jblas info messages
         Logger.getLogger().setLevel(Logger.WARNING);
 
-
-        double learningRate = 2;
+        int indims, outdims;
         int batchsize = 50;
-        int maxEpochs = 500;
-        int patience = 10;
-        int hiddimsFirst = 100;
+        int hiddimsEmbedding = 100;
         int hiddimsOthers = 200;
 
-        // load datasets
-        System.out.println("\nLoading data...");
-        VocabDataset trainset = new VocabDataset(batchsize, true, rnd);
-        trainset.fromFile(args[2], args[5]);
+        VocabDataset trainset, devset, testset;
 
-        VocabDataset devset = new VocabDataset(batchsize, false, rnd);
-        devset.fromFile(args[3], args[5]);
+        Sequential net;
 
-        VocabDataset testset = new VocabDataset(batchsize, false, rnd);
-        testset.fromFile(args[4], args[5]);
+        switch (args[0]) {
+            case "part1":
+                // load datasets
+                System.out.println("\nLoading data...");
+                trainset = new VocabDataset(batchsize, true, rnd);
+                trainset.fromFile(args[2], args[5]);
 
-        System.out.printf("train: %d instances\n", trainset.getSize());
-        System.out.printf("dev: %d instances\n", devset.getSize());
-        System.out.printf("test: %d instances\n", testset.getSize());
+                devset = new VocabDataset(batchsize, false, rnd);
+                devset.fromFile(args[3], args[5]);
 
-        // create a network
-        System.out.println("\nCreating network...");
-        int indims = trainset.getInputDims();
-        int outdims = 50;
-        Sequential net = new Sequential(new Layer[] {
-                // Input to first hidden layer.
-                new Linear(indims, hiddimsFirst, new WeightInitXavier()),
-                new ReLU(),
-                // first to second hidden layer.
-                new Linear(hiddimsFirst, hiddimsOthers, new WeightInitXavier()),
-                new ReLU(),
-                // second to third hidden layer.
-                new Linear(hiddimsOthers, hiddimsOthers, new WeightInitXavier()),
-                new ReLU(),
-                // third hidden layer to output.
-                new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
-                new Softmax()});
+                testset = new VocabDataset(batchsize, false, rnd);
+                testset.fromFile(args[4], args[5]);
+
+                System.out.printf("train: %d instances\n", trainset.getSize());
+                System.out.printf("dev: %d instances\n", devset.getSize());
+                System.out.printf("test: %d instances\n", testset.getSize());
+
+                // create a network
+                System.out.println("\nCreating network...");
+                indims = trainset.getInputDims();
+                outdims = 50;
+
+                net = new Sequential(new Layer[]{
+                        // Input to first hidden layer.
+                        new Linear(indims, hiddimsEmbedding, new WeightInitXavier()),
+                        new ReLU(),
+                        // first to second hidden layer.
+                        new Linear(hiddimsEmbedding, hiddimsOthers, new WeightInitXavier()),
+                        new ReLU(),
+                        // second to third hidden layer.
+                        new Linear(hiddimsOthers, hiddimsOthers, new WeightInitXavier()),
+                        new ReLU(),
+                        // third hidden layer to output.
+                        new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
+                        new Softmax()});
+
+                trainAndEval(net, trainset, devset, testset);
+                break;
+
+            case "part2":
+                // load datasets
+                System.out.println("\nLoading data...");
+                trainset = new VocabDataset(batchsize, true, rnd);
+                trainset.fromFile(args[2]);
+
+                devset = new VocabDataset(batchsize, false, rnd);
+                devset.fromFile(args[3]);
+
+                testset = new VocabDataset(batchsize, false, rnd);
+                testset.fromFile(args[4]);
+
+                System.out.printf("train: %d instances\n", trainset.getSize());
+                System.out.printf("dev: %d instances\n", devset.getSize());
+                System.out.printf("test: %d instances\n", testset.getSize());
+
+                // create a network
+                System.out.println("\nCreating network...");
+                indims = trainset.getInputDims();
+                outdims = 50;
+
+
+                net = new Sequential(new Layer[]{
+                        // Input to first hidden layer.
+                        new EmbeddingBag(indims, hiddimsEmbedding, new WeightInitXavier()),
+                        new ReLU(),
+                        // first to second hidden layer.
+                        new Linear(hiddimsEmbedding, hiddimsOthers, new WeightInitXavier()),
+                        new ReLU(),
+                        // second to third hidden layer.
+                        new Linear(hiddimsOthers, hiddimsOthers, new WeightInitXavier()),
+                        new ReLU(),
+                        // third hidden layer to output.
+                        new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
+                        new Softmax()});
+
+                trainAndEval(net, trainset, devset, testset);
+                break;
+            default:
+                System.out.println("Please select part1, part2, part3 or part4.");
+        }
+
+    }
+
+    public static void trainAndEval(Sequential net, VocabDataset trainset, VocabDataset devset, VocabDataset testset) {
+        double learningRate = 2;
+        int maxEpochs = 500;
+        int patience = 10;
 
         CrossEntropy loss = new CrossEntropy();
         Optimizer sgd = new SGD(net, learningRate);
@@ -94,6 +151,7 @@ public class A4Main {
 
     /**
      * Convert a mini-batch of the vocabulary dataset to data structure that can be used by the network
+     *
      * @param batch a list of MNIST items, each of which is a pair of (input image, output label)
      * @return two DoubleMatrix objects: X (input) and Y (labels)
      */
@@ -105,7 +163,7 @@ public class A4Main {
         double[] ys = new double[batch.size()];
         for (int i = 0; i < batch.size(); i++) {
             xs[i] = batch.get(i).first;
-            ys[i] = (double)batch.get(i).second;
+            ys[i] = (double) batch.get(i).second;
         }
         DoubleMatrix X = new DoubleMatrix(xs);
         DoubleMatrix Y = new DoubleMatrix(ys.length, 1, ys);
@@ -113,9 +171,11 @@ public class A4Main {
     }
 
     //TODO: change!
+
     /**
      * calculate classification accuracy of an ANN on a given dataset.
-     * @param net an ANN model
+     *
+     * @param net  an ANN model
      * @param data the vocabulary dataset
      * @return the classification accuracy value (double, in the range of [0,1])
      */
@@ -152,15 +212,17 @@ public class A4Main {
     }
 
     //TODO: change!
+
     /**
      * train an ANN for our NLP problem.
-     * @param net an ANN model to be trained
-     * @param loss a loss function object
+     *
+     * @param net       an ANN model to be trained
+     * @param loss      a loss function object
      * @param optimizer the optimizer used for updating the model's weights (currently only SGD is supported)
      * @param traindata training dataset
-     * @param devdata validation dataset (also called development dataset), used for early stopping
-     * @param nEpochs the maximum number of training epochs
-     * @param patience the maximum number of consecutive epochs where validation performance is allowed to non-increased, used for early stopping
+     * @param devdata   validation dataset (also called development dataset), used for early stopping
+     * @param nEpochs   the maximum number of training epochs
+     * @param patience  the maximum number of consecutive epochs where validation performance is allowed to non-increased, used for early stopping
      */
     public static void train(Layer net, Loss loss, Optimizer optimizer, VocabDataset traindata,
                              VocabDataset devdata, int nEpochs, int patience) {
@@ -206,8 +268,7 @@ public class A4Main {
             if (valAcc <= peakAcc) {
                 notAtPeak += 1;
                 System.out.printf("not at peak %d times consecutively\n", notAtPeak);
-            }
-            else {
+            } else {
                 notAtPeak = 0;
                 peakAcc = valAcc;
             }
@@ -221,7 +282,7 @@ public class A4Main {
         long trainingDuration = (endTime - startTime) / 1000000000;
 
         System.out.println("\ntraining is finished");
-        System.out.println("Total training time: "+ trainingDuration +" seconds");
+        System.out.println("Total training time: " + trainingDuration + " seconds");
     }
 
 }

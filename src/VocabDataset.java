@@ -36,6 +36,26 @@ public class VocabDataset  extends Dataset<double[], Integer> {
 
     @Override
     public void fromFile(String path) throws IOException {
+        items = new ArrayList<Pair<double[], Integer>>();
+
+        BufferedReader br = new BufferedReader(new FileReader(path));
+
+        // first line
+        String[] ss = br.readLine().split(" ");
+        int size = Integer.valueOf(ss[0]);
+        inputDims = Integer.valueOf(ss[1]);
+
+        for (int i = 0; i < size; i++) {
+            ss = br.readLine().split(" ; ");
+            String[] sx = ss[0].split(" ");
+            double[] xs = new double[inputDims];
+            Integer y = Integer.valueOf(ss[1]);
+            for (int j = 0; j < sx.length; j++) {
+                xs[j] = Double.parseDouble(sx[j]);
+            }
+            items.add(new Pair<double[], Integer>(xs, y));
+        }
+        br.close();
     }
 
 
