@@ -12,6 +12,7 @@ import org.jblas.DoubleMatrix;
 import org.jblas.util.Logger;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -37,37 +38,33 @@ public class A4Main {
         // turn off jblas info messages
         Logger.getLogger().setLevel(Logger.WARNING);
 
-        int indims, outdims;
         int batchsize = 50;
         int hiddimsEmbedding = 100;
         int hiddimsOthers = 200;
 
-        VocabDataset trainset, devset, testset;
+        // load datasets
+        System.out.println("\nLoading data...");
+        VocabDataset trainset = new VocabDataset(batchsize, true, rnd);
+        trainset.fromFile(args[2], args[5]);
 
+        VocabDataset devset = new VocabDataset(batchsize, false, rnd);
+        devset.fromFile(args[3], args[5]);
+
+        VocabDataset testset = new VocabDataset(batchsize, false, rnd);
+        testset.fromFile(args[4], args[5]);
+
+        System.out.printf("train: %d instances\n", trainset.getSize());
+        System.out.printf("dev: %d instances\n", devset.getSize());
+        System.out.printf("test: %d instances\n", testset.getSize());
+
+        // create a network
+        System.out.println("\nCreating network...");
+        int indims = trainset.getInputDims();
+        int outdims = 50;
         Sequential net;
 
         switch (args[0]) {
             case "part1":
-                // load datasets
-                System.out.println("\nLoading data...");
-                trainset = new VocabDataset(batchsize, true, rnd);
-                trainset.fromFile(args[2], args[5]);
-
-                devset = new VocabDataset(batchsize, false, rnd);
-                devset.fromFile(args[3], args[5]);
-
-                testset = new VocabDataset(batchsize, false, rnd);
-                testset.fromFile(args[4], args[5]);
-
-                System.out.printf("train: %d instances\n", trainset.getSize());
-                System.out.printf("dev: %d instances\n", devset.getSize());
-                System.out.printf("test: %d instances\n", testset.getSize());
-
-                // create a network
-                System.out.println("\nCreating network...");
-                indims = trainset.getInputDims();
-                outdims = 50;
-
                 net = new Sequential(new Layer[]{
                         // Input to first hidden layer.
                         new Linear(indims, hiddimsEmbedding, new WeightInitXavier()),
@@ -84,29 +81,7 @@ public class A4Main {
 
                 trainAndEval(net, trainset, devset, testset);
                 break;
-
             case "part2":
-                // load datasets
-                System.out.println("\nLoading data...");
-                trainset = new VocabDataset(batchsize, true, rnd);
-                trainset.fromFile(args[2]);
-
-                devset = new VocabDataset(batchsize, false, rnd);
-                devset.fromFile(args[3]);
-
-                testset = new VocabDataset(batchsize, false, rnd);
-                testset.fromFile(args[4]);
-
-                System.out.printf("train: %d instances\n", trainset.getSize());
-                System.out.printf("dev: %d instances\n", devset.getSize());
-                System.out.printf("test: %d instances\n", testset.getSize());
-
-                // create a network
-                System.out.println("\nCreating network...");
-                indims = trainset.getInputDims();
-                outdims = 50;
-
-
                 net = new Sequential(new Layer[]{
                         // Input to first hidden layer.
                         new EmbeddingBag(indims, hiddimsEmbedding, new WeightInitXavier()),
@@ -126,7 +101,6 @@ public class A4Main {
             default:
                 System.out.println("Please select part1, part2, part3 or part4.");
         }
-
     }
 
     public static void trainAndEval(Sequential net, VocabDataset trainset, VocabDataset devset, VocabDataset testset) {
@@ -169,6 +143,30 @@ public class A4Main {
         DoubleMatrix Y = new DoubleMatrix(ys.length, 1, ys);
         return new Pair<DoubleMatrix, DoubleMatrix>(X, Y);
     }
+
+//    /**
+//     * Convert a mini-batch of the vocabulary dataset to data structure that can be used by the network
+//     *
+//     * @param batch a list of MNIST items, each of which is a pair of (input image, output label)
+//     * @return two DoubleMatrix objects: X (input) and Y (labels)
+//     */
+//    public static List<int[]> fromBatch(List<Pair<double[], Integer>> batch) {
+//        if (batch == null)
+//            return null;
+//
+//        List<int[]> wordsIndices = new ArrayList<>();
+//
+//
+//        double[][] xs = new double[batch.size()][];
+//        double[] ys = new double[batch.size()];
+//        for (int i = 0; i < batch.size(); i++) {
+//            xs[i] = batch.get(i).first;
+//            ys[i] = (double) batch.get(i).second;
+//        }
+//        DoubleMatrix X = new DoubleMatrix(xs);
+//        DoubleMatrix Y = new DoubleMatrix(ys.length, 1, ys);
+//        return new Pair<DoubleMatrix, DoubleMatrix>(X, Y);
+//    }
 
     //TODO: change!
 
@@ -245,7 +243,6 @@ public class A4Main {
 
                 // always reset the gradients before performing backward
                 optimizer.resetGradients();
-
                 // calculate the loss value
                 DoubleMatrix Yhat = net.forward(batch.first);
                 double lossVal = loss.forward(batch.second, Yhat);

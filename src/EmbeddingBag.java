@@ -2,6 +2,8 @@ package src;
 
 import org.jblas.*;
 import java.util.List;
+import java.util.stream.IntStream;
+
 import minet.layer.init.*;
 import minet.layer.Layer;
 
@@ -39,6 +41,7 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
         DoubleMatrix Y = null; // output of this layer (to be computed by you)
 
         // YOUR CODE HERE
+
 
         return Y;
     }
