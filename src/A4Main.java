@@ -205,8 +205,7 @@ public class A4Main {
         double peakAcc = -1;  // the best accuracy of the previous epochs
         double totalLoss = 0;  // the total loss of the current epoch
 
-        traindata.reset(); // reset index and shuffle the dataset before training. TODO: !IMPORTANT.
-
+//        traindata.reset(); // reset index and shuffle the dataset before training. TODO: !IMPORTANT.
 
         for (int e = 0; e < 1; e++) {
             totalLoss = 0;
@@ -216,8 +215,6 @@ public class A4Main {
                 Pair<DoubleMatrix, DoubleMatrix> batch = fromBatch(traindata.getNextMiniBatch());
                 if (batch == null)
                     break;
-
-                System.out.println("\n\nMESA TRAIN"+batch.first.getRow(2));
 
                 // always reset the gradients before performing backward
                 optimizer.resetGradients();
