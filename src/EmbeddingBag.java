@@ -1,6 +1,9 @@
 package src;
 
 import org.jblas.*;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -13,7 +16,8 @@ import minet.layer.Layer;
 public class EmbeddingBag implements Layer, java.io.Serializable {			
 
 	private static final long serialVersionUID = -10445336293457309L;
-	
+
+	private int vocabSize;
 	DoubleMatrix W;  // weight matrix (for simplicity, we can ignore the bias term b)
 
     // for backward
@@ -27,6 +31,7 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
      * @param wInit (WeightInit) weight initialisation method
      */
     public EmbeddingBag(int vocabSize, int outdims, WeightInit wInit) {
+        this.vocabSize = vocabSize;
         this.W = wInit.generate(vocabSize, outdims);
         this.gW = DoubleMatrix.zeros(vocabSize, outdims);
     }
@@ -39,6 +44,7 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
     @Override
     public DoubleMatrix forward(Object input) {
         DoubleMatrix Y = null; // output of this layer (to be computed by you)
+        getX(input);
 
         // YOUR CODE HERE
 
@@ -69,5 +75,41 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
     public String toString() {
         return String.format("Embedding: %d rows, %d dims", W.rows, W.columns);
     }
+
+    public List<int[]> getX(Object input) {
+        DoubleMatrix X = (DoubleMatrix)input;
+        //calculate batch size
+        int batchSize = ((DoubleMatrix) input).length / vocabSize;
+
+        List<int[]> xIndexes = new ArrayList<>();
+        int indexStart = 0;
+        int indexEnd = vocabSize;
+        for (int i=0; i<batchSize; i++) {
+            xIndexes.add(getIndexesWhereOne(X.elementsAsList().subList(indexStart, indexEnd)));
+
+            indexStart += vocabSize;
+            indexEnd += vocabSize;
+        }
+        return null;
+    }
+
+    /**
+     * Get all the indexes where there is a value of 1.
+     * @param list
+     * @return
+     */
+    private int[] getIndexesWhereOne(List<Double> list) {
+        ArrayList<Integer> indexes = new ArrayList<>();
+
+        for (int i=0; i<list.size();i++) {
+            if (list.get(i) == 1) {
+                indexes.add(i);
+            }
+        }
+
+        System.out.println(Arrays.toString(indexes.stream().mapToInt(i -> i).toArray()));
+        return indexes.stream().mapToInt(i -> i).toArray();
+    }
+
 
 }

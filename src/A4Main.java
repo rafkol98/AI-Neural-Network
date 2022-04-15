@@ -126,7 +126,7 @@ public class A4Main {
     /**
      * Convert a mini-batch of the vocabulary dataset to data structure that can be used by the network
      *
-     * @param batch a list of MNIST items, each of which is a pair of (input image, output label)
+     * @param batch
      * @return two DoubleMatrix objects: X (input) and Y (labels)
      */
     public static Pair<DoubleMatrix, DoubleMatrix> fromBatch(List<Pair<double[], Integer>> batch) {
@@ -137,7 +137,11 @@ public class A4Main {
         double[] ys = new double[batch.size()];
         for (int i = 0; i < batch.size(); i++) {
             xs[i] = batch.get(i).first;
+            System.out.println("BATCH MESA - "+i);
+            System.out.println(Arrays.toString(xs[i]));
+
             ys[i] = (double) batch.get(i).second;
+            System.out.println(ys[i]);
         }
         DoubleMatrix X = new DoubleMatrix(xs);
         DoubleMatrix Y = new DoubleMatrix(ys.length, 1, ys);
@@ -230,7 +234,8 @@ public class A4Main {
         double peakAcc = -1;  // the best accuracy of the previous epochs
         double totalLoss = 0;  // the total loss of the current epoch
 
-        traindata.reset(); // reset index and shuffle the data before training
+        traindata.reset(); // reset index and shuffle the dataset before training
+
 
         for (int e = 0; e < nEpochs; e++) {
             totalLoss = 0;
@@ -238,6 +243,7 @@ public class A4Main {
             while (true) {
                 // get the next mini-batch
                 Pair<DoubleMatrix, DoubleMatrix> batch = fromBatch(traindata.getNextMiniBatch());
+
                 if (batch == null)
                     break;
 
