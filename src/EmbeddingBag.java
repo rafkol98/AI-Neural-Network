@@ -85,10 +85,12 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
         int indexStart = 0;
         int indexEnd = vocabSize;
         for (int i=0; i<batchSize; i++) {
-            xIndexes.add(getIndexesWhereOne(X.elementsAsList().subList(indexStart, indexEnd)));
-
-            indexStart += vocabSize;
-            indexEnd += vocabSize;
+            xIndexes.add(getIndexesWhereOne(X.getRow(i).elementsAsList()));
+            
+            if (i == 2) {
+                System.out.println("\n\n DEBUG X embedding: "+X.getRow(2));
+                System.out.println("\n\nDEBUG EMBEDDING:"+ Arrays.toString(getIndexesWhereOne(X.getRow(i).elementsAsList())));
+            }
         }
         return null;
     }
@@ -107,7 +109,6 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
             }
         }
 
-        System.out.println(Arrays.toString(indexes.stream().mapToInt(i -> i).toArray()));
         return indexes.stream().mapToInt(i -> i).toArray();
     }
 

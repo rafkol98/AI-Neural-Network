@@ -137,43 +137,14 @@ public class A4Main {
         double[] ys = new double[batch.size()];
         for (int i = 0; i < batch.size(); i++) {
             xs[i] = batch.get(i).first;
-            System.out.println("BATCH MESA - "+i);
-            System.out.println(Arrays.toString(xs[i]));
-
             ys[i] = (double) batch.get(i).second;
-            System.out.println(ys[i]);
         }
         DoubleMatrix X = new DoubleMatrix(xs);
         DoubleMatrix Y = new DoubleMatrix(ys.length, 1, ys);
         return new Pair<DoubleMatrix, DoubleMatrix>(X, Y);
     }
 
-//    /**
-//     * Convert a mini-batch of the vocabulary dataset to data structure that can be used by the network
-//     *
-//     * @param batch a list of MNIST items, each of which is a pair of (input image, output label)
-//     * @return two DoubleMatrix objects: X (input) and Y (labels)
-//     */
-//    public static List<int[]> fromBatch(List<Pair<double[], Integer>> batch) {
-//        if (batch == null)
-//            return null;
-//
-//        List<int[]> wordsIndices = new ArrayList<>();
-//
-//
-//        double[][] xs = new double[batch.size()][];
-//        double[] ys = new double[batch.size()];
-//        for (int i = 0; i < batch.size(); i++) {
-//            xs[i] = batch.get(i).first;
-//            ys[i] = (double) batch.get(i).second;
-//        }
-//        DoubleMatrix X = new DoubleMatrix(xs);
-//        DoubleMatrix Y = new DoubleMatrix(ys.length, 1, ys);
-//        return new Pair<DoubleMatrix, DoubleMatrix>(X, Y);
-//    }
-
     //TODO: change!
-
     /**
      * calculate classification accuracy of an ANN on a given dataset.
      *
@@ -234,18 +205,19 @@ public class A4Main {
         double peakAcc = -1;  // the best accuracy of the previous epochs
         double totalLoss = 0;  // the total loss of the current epoch
 
-        traindata.reset(); // reset index and shuffle the dataset before training
+        traindata.reset(); // reset index and shuffle the dataset before training. TODO: !IMPORTANT.
 
 
-        for (int e = 0; e < nEpochs; e++) {
+        for (int e = 0; e < 1; e++) {
             totalLoss = 0;
 
             while (true) {
                 // get the next mini-batch
                 Pair<DoubleMatrix, DoubleMatrix> batch = fromBatch(traindata.getNextMiniBatch());
-
                 if (batch == null)
                     break;
+
+                System.out.println("\n\nMESA TRAIN"+batch.first.getRow(2));
 
                 // always reset the gradients before performing backward
                 optimizer.resetGradients();
@@ -253,7 +225,7 @@ public class A4Main {
                 DoubleMatrix Yhat = net.forward(batch.first);
                 double lossVal = loss.forward(batch.second, Yhat);
 
-                // calculate gradients of the weights using backprop algorithm
+                // calculate gradients of the weights using backward propagation algorithm
                 net.backward(loss.backward());
 
                 // update the weights using the calculated gradients
