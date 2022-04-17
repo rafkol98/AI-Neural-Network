@@ -3,10 +3,7 @@ package src;
 import org.jblas.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.IntStream;
 
 import minet.layer.init.*;
 import minet.layer.Layer;
@@ -21,7 +18,7 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
     // for backward
     List<int[]> X;  // store input X for computing backward, each element in this list is a sample (an array of word indices).
     DoubleMatrix gW;    // gradient of W
-    private int vocabSize, samplesInTheBatch;
+    private int vocabSize, batchSize, outdims;
 
     /**
      * Constructor for EmbeddingBag
@@ -31,6 +28,7 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
      * @param wInit     (WeightInit) weight initialisation method
      */
     public EmbeddingBag(int vocabSize, int outdims, WeightInit wInit) {
+        this.outdims = outdims;
         this.vocabSize = vocabSize;
         this.W = wInit.generate(vocabSize, outdims);
         this.gW = DoubleMatrix.zeros(vocabSize, outdims);
@@ -45,19 +43,18 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
     @Override
     public DoubleMatrix forward(Object input) {
         // Calculate number of samples in the batch.
-        this.samplesInTheBatch = ((DoubleMatrix) input).length / vocabSize;
-        DoubleMatrix Y = null; // output of this layer (to be computed by you)
+        this.batchSize = ((DoubleMatrix) input).length / vocabSize;
+        DoubleMatrix Y = new DoubleMatrix(batchSize, W.getColumns()); // output of this layer (to be computed by you)
         List<int[]> X = getX(input);
 
-        System.out.println("ROWS: "+W.getRows()+ "COLUMNS: "+W.getColumns());
-
-        for (int i=0; i<samplesInTheBatch; i++) {
-            
-            double sumOfWeightsForNode = getSumOfWeights(X.get(i), i);
-
+        // Iterate through the batch.
+        for (int i = 0; i < batchSize; i++) {
+            // iterate through the out dimensions.
+            for (int d = 0; d < outdims; d++) {
+                double sumOfWeightsForNode = getSumOfWeights(X.get(i), d); // get sum of weights for the node.
+                Y.put(i, d, sumOfWeightsForNode);
+            }
         }
-
-
         return Y;
     }
 
@@ -96,7 +93,7 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
 
         // Find all the indexes for each sample where words occur.
         List<int[]> xIndexes = new ArrayList<>();
-        for (int i = 0; i < samplesInTheBatch; i++) {
+        for (int i = 0; i < batchSize; i++) {
             xIndexes.add(getIndexesWhereOne(X.getRow(i).elementsAsList()));
         }
         return xIndexes;
@@ -121,15 +118,15 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
         return indexes.stream().mapToInt(i -> i).toArray();
     }
 
-    private double getSumOfWeights(int[] indexes, int sampleNumber) {
-        List<Double> weightsForSample = W.getColumn(sampleNumber).elementsAsList();
-        System.out.println(W.getColumn(1).elementsAsList().size());
+    private double getSumOfWeights(int[] indexes, int dimensionNumber) {
+        double sumWeights = 0;
 
-        List<Double> appropriateWeights = new ArrayList<>();
-        IntStream.of(indexes).forEach(i -> appropriateWeights.add(weightsForSample.get(i)));
+        for (int i = 0; i < indexes.length; i++) {
+            sumWeights += W.get(indexes[i], dimensionNumber);
+        }
 
         // return sum of weights as a double.
-        return appropriateWeights.stream().mapToDouble(i -> i.doubleValue()).sum();
+        return sumWeights;
     }
 
 
