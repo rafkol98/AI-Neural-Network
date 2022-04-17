@@ -98,24 +98,29 @@ public class GradientChecker {
     public static void main(String[] args) {
         System.out.println("--- Test Classification ---");
 //        testClasification();
-        testClasification2();
+        testClasificationForEmbedding();
 
     }
 
-    public static void testClasification2() {
-        //TODO: change!
+    public static void testClasificationForEmbedding() {
+        System.out.println("Testing Backward Function - Embedding Layer");
+        // Initialise X matrix
         DoubleMatrix X = new DoubleMatrix(
                 new double[][] {
-                        {0.00, 1.00, 0.00, 0.00, 1.00},
-                        {0.00, 0.00, 1.00, 1.00, 0.00},
-                        {0.00, 1.00, 0.00, 1.00, 0.00}});
+                        {1.00, 0.00, 0.00, 0.00, 1.00},
+                        {1.00, 0.00, 0.00, 1.00, 1.00},
+                        {1.00, 1.00, 0.00, 0.00, 0.00},
+                        {1.00, 1.00, 0.00, 1.00, 1.00},
+                        {0.00, 1.00, 1.00, 1.00, 1.00},
+                        {0.00, 0.00, 0.00, 1.00, 0.00}});
 
-        double[] ys = new double[] {0,1,2};
+        // Initialise ys.
+        double[] ys = new double[] {0,1,2,3,4,5};
         DoubleMatrix Y = new DoubleMatrix(ys);
 
         CrossEntropy loss = new CrossEntropy();
         Sequential net = new Sequential(new Layer[] {
-            new EmbeddingBag(5,3, new WeightInitXavier()),
+            new EmbeddingBag(5,6, new WeightInitXavier()),
                 new Softmax()});
 
         checkGradient(net, loss, X,Y);

@@ -104,6 +104,25 @@ public class A4Main {
 
                 trainAndEval(net, trainset, devset, testset);
                 break;
+
+            case "part3":
+                System.out.println("Meow");
+                net = new Sequential(new Layer[]{
+                        // Input to first hidden layer.
+                        new EmbeddingBag(indims, hiddimsEmbedding, new WeightInitXavier()),
+                        new ReLU(),
+                        // first to second hidden layer.
+                        new Linear(hiddimsEmbedding, hiddimsOthers, new WeightInitXavier()),
+                        new ReLU(),
+                        // second to third hidden layer.
+                        new Linear(hiddimsOthers, hiddimsOthers, new WeightInitXavier()),
+                        new ReLU(),
+                        // third hidden layer to output.
+                        new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
+                        new Softmax()});
+
+                trainAndEval(net, trainset, devset, testset);
+                break;
             default:
                 System.out.println("Please select part1, part2, part3 or part4.");
         }

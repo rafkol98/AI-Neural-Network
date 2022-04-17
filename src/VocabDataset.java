@@ -2,6 +2,7 @@ package src;
 
 import minet.data.Dataset;
 import minet.util.Pair;
+import org.jblas.DoubleMatrix;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -14,6 +15,8 @@ public class VocabDataset  extends Dataset<double[], Integer> {
 
     // number of input features
     int inputDims;
+
+    HashMap<String, DoubleMatrix> weightsMap = new HashMap<>();
 
     /**
      * Get the number of input dimensions.
@@ -48,6 +51,7 @@ public class VocabDataset  extends Dataset<double[], Integer> {
         // get the number of instances (elements) and number of features.
         int instances = countLinesInFile(path);
         inputDims = countLinesInFile(pathVocabulary);
+//        inputDims = countLinesInFile(pathVocabulary, true);
 
         FileReader fr = new FileReader(path);
         BufferedReader br = new BufferedReader(fr);
@@ -76,10 +80,35 @@ public class VocabDataset  extends Dataset<double[], Integer> {
     public int countLinesInFile(String path) throws IOException {
         BufferedReader br = new BufferedReader( new FileReader(path));
         int lines = 0;
-        while (br.readLine() != null) lines++;
+        while (br.readLine() != null) {
+            lines++;
+        }
         br.close();
         return lines;
     }
+
+//    public int countLinesInFile(String path, boolean f) throws IOException {
+//        BufferedReader br = new BufferedReader( new FileReader(path));
+//
+////        boolean flag = false;
+//
+//        int lines = 0;
+//        String line;
+//        while ((line = br.readLine()) != null) {
+//            String[] splitLine = line.split(" ", 2);
+//            weightsMap.put(splitLine[0], splitLine[1]);
+//            lines++;
+//        }
+//
+//        return lines;
+////        int lines = 0;
+////        while (br.readLine() != null) {
+////            lines++;
+////        }
+////        br.close();
+////        return lines;
+//    }
+
 
     /**
      * One hot encode the given instance - Bag-of-Word strategy.
@@ -105,4 +134,6 @@ public class VocabDataset  extends Dataset<double[], Integer> {
         // Convert to double array and return.
         return encoded.stream().mapToDouble(Integer::doubleValue).toArray();
     }
+
+
 }

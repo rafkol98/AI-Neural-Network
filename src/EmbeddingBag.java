@@ -34,6 +34,14 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
         this.gW = DoubleMatrix.zeros(vocabSize, outdims);
     }
 
+
+    public EmbeddingBag(int vocabSize, int outdims, DoubleMatrix pretrainedWeights) {
+        this.outdims = outdims;
+        this.vocabSize = vocabSize;
+        this.W = pretrainedWeights;
+        this.gW = DoubleMatrix.zeros(vocabSize, outdims);
+    }
+
     /**
      * Forward pass
      *
