@@ -15,13 +15,6 @@ public class VocabDataset  extends Dataset<double[], Integer> {
     // number of input features
     int inputDims;
 
-    // Map to store the indexes of words used for each sample
-    HashMap<Integer, int[]> mapWordsIndexes = new HashMap<Integer, int[]>();
-
-    public HashMap<Integer, int[]> getMapWordsIndexes() {
-        return mapWordsIndexes;
-    }
-
     /**
      * Get the number of input dimensions.
      * @return the number of input dimensions.

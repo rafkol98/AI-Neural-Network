@@ -7,6 +7,7 @@ import minet.loss.CrossEntropy;
 import minet.loss.Loss;
 import minet.optim.Optimizer;
 import minet.optim.SGD;
+import minet.util.GradientChecker;
 import minet.util.Pair;
 import org.jblas.DoubleMatrix;
 import org.jblas.util.Logger;
@@ -21,10 +22,12 @@ import src.EmbeddingBag;
 
 public class A4Main {
 
+
     /**
      * Example A4Main class. Feel free to edit this file
      */
     public static void main(String[] args) throws IOException {
+
         if (args.length < 6) {
             System.out.println("Usage: java A4Main <part1/part2/part3/part4> <seed> <trainFile> <devFile> <testFile> <vocabFile> <classesFile>");
             return;
@@ -63,6 +66,8 @@ public class A4Main {
         int outdims = 50;
         Sequential net;
 
+        GradientChecker gradientChecker = new GradientChecker();
+        CrossEntropy loss = new CrossEntropy();
         switch (args[0]) {
             case "part1":
                 net = new Sequential(new Layer[]{
@@ -81,6 +86,7 @@ public class A4Main {
 
                 trainAndEval(net, trainset, devset, testset);
                 break;
+
             case "part2":
                 net = new Sequential(new Layer[]{
                         // Input to first hidden layer.
@@ -104,7 +110,7 @@ public class A4Main {
     }
 
     public static void trainAndEval(Sequential net, VocabDataset trainset, VocabDataset devset, VocabDataset testset) {
-        double learningRate = 2;
+        double learningRate = 0.1;
         int maxEpochs = 500;
         int patience = 10;
 
@@ -235,7 +241,6 @@ public class A4Main {
 
         traindata.reset(); // reset index and shuffle the dataset before training
 
-
         for (int e = 0; e < nEpochs; e++) {
             totalLoss = 0;
 
@@ -250,6 +255,7 @@ public class A4Main {
                 optimizer.resetGradients();
                 // calculate the loss value
                 DoubleMatrix Yhat = net.forward(batch.first);
+
                 double lossVal = loss.forward(batch.second, Yhat);
 
                 // calculate gradients of the weights using backprop algorithm

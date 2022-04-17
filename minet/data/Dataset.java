@@ -23,6 +23,11 @@ public abstract class Dataset<Tin, Tout> implements java.io.Serializable{
     protected int batchsize; // batch size
     protected Random rnd; // random generator
 
+
+    public ArrayList<Pair<Tin, Tout>> getItems() {
+        return items;
+    }
+
     /**
      * Constructor for Dataset
      * @param batchsize (int) size of each mini-batch

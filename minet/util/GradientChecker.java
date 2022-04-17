@@ -9,7 +9,9 @@ import minet.loss.Loss;
 import minet.loss.MeanSquaredError;
 
 import org.jblas.DoubleMatrix;
+import src.EmbeddingBag;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -95,8 +97,29 @@ public class GradientChecker {
 
     public static void main(String[] args) {
         System.out.println("--- Test Classification ---");
-        testClasification();
+//        testClasification();
+        testClasification2();
 
     }
 
-}
+    public static void testClasification2() {
+        //TODO: change!
+        DoubleMatrix X = new DoubleMatrix(
+                new double[][] {
+                        {0.00, 1.00, 0.00, 0.00, 1.00},
+                        {0.00, 0.00, 1.00, 1.00, 0.00},
+                        {0.00, 1.00, 0.00, 1.00, 0.00}});
+
+        double[] ys = new double[] {0,1,2};
+        DoubleMatrix Y = new DoubleMatrix(ys);
+
+        CrossEntropy loss = new CrossEntropy();
+        Sequential net = new Sequential(new Layer[] {
+            new EmbeddingBag(5,3, new WeightInitXavier()),
+                new Softmax()});
+
+        checkGradient(net, loss, X,Y);
+        }
+    }
+
+

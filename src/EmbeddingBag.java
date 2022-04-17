@@ -44,10 +44,11 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
     public DoubleMatrix forward(Object input) {
         // Calculate number of samples in the batch.
         this.batchSize = ((DoubleMatrix) input).length / vocabSize;
-        DoubleMatrix Y = new DoubleMatrix(batchSize, W.getColumns()); // output of this layer (to be computed by you)
-        List<int[]> X = getX(input);
 
-        // Iterate through the batch.
+        DoubleMatrix Y = new DoubleMatrix(batchSize, W.getColumns()); // output of this layer
+        X = getX(input);
+
+        // Iterate through the samples in the batch.
         for (int i = 0; i < batchSize; i++) {
             // iterate through the out dimensions.
             for (int d = 0; d < outdims; d++) {
@@ -55,12 +56,29 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
                 Y.put(i, d, sumOfWeightsForNode);
             }
         }
+
         return Y;
     }
 
+    // TODO: matrix multiplication with matmul.
     @Override
     public DoubleMatrix backward(DoubleMatrix gY) {
-        // YOUR CODE HERE
+        // Iterate through the out dimensions / nodes.
+        for (int d = 0; d < outdims; d++) {
+            // Iterate through the samples in the batch.
+            for (int s = 0; s < batchSize; s++) {
+                int[] indexes = X.get(s); // get indexes of current sample.
+
+                // update gW at the specific index and dimension - with the value calculated.
+                for (int i = 0; i < indexes.length; i++) {
+                    // calculate value for current sample.
+                    double val = gY.get(s, d);
+                    // get the prior (before updating - summing) gradient value of the current index and the dimension.
+                    double prior = gW.get(indexes[i], d);
+                    gW.put(indexes[i], d, prior + val);
+                }
+            }
+        }
 
         return null; // there is no need to compute gX as the previous layer of this one is the input layer of the network
     }
