@@ -4,9 +4,7 @@ import minet.data.Dataset;
 import minet.util.Pair;
 import org.jblas.DoubleMatrix;
 
-import javax.print.Doc;
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
@@ -15,11 +13,13 @@ import java.util.stream.Collectors;
 public class VocabDataset  extends Dataset<double[], Integer> {
 
     // number of input features
-    int inputDims;
+    private int inputDims;
+    private String pathVocabulary;
+    private boolean trainingWeights;
 
-    ArrayList<double[]> weightsMap = new ArrayList<>();
+    private ArrayList<double[]> allWeights = new ArrayList<>();
 
-    DoubleMatrix pretrainedWeights;
+    private DoubleMatrix pretrainedWeights;
 
     public DoubleMatrix getPretrainedWeights() {
         return pretrainedWeights;
@@ -40,19 +40,17 @@ public class VocabDataset  extends Dataset<double[], Integer> {
      * @param shuffle   (boolean) if true, shuffle the dataset at the beginning of each epoch
      * @param rnd       (java.util.Random) random generator for the shuffling
      */
-    public VocabDataset(int batchsize, boolean shuffle, Random rnd) {
+    public VocabDataset(int batchsize, boolean shuffle, Random rnd, String pathVocabulary, boolean trainingWeights) {
         super(batchsize, shuffle, rnd);
+        this.pathVocabulary = pathVocabulary;
+        this.trainingWeights = trainingWeights;
     }
-
-    @Override
-    public void fromFile(String path) throws IOException {
-    }
-
 
     /**
      * Load data from file and vocabulary.
      */
-    public void fromFile(String path, String pathVocabulary, boolean trainingWeights) throws IOException {
+    @Override
+    public void fromFile(String path) throws IOException {
         items = new ArrayList<Pair<double[], Integer>>();
 
         // get the number of instances (elements) and number of features.
@@ -92,7 +90,7 @@ public class VocabDataset  extends Dataset<double[], Integer> {
             // if the trainingWeights flag is true - then read in the weights provided in the file.
             if (trainingWeights && vocabulary) {
                 String[] splitLine = line.split(" ", 2);
-                placeInMap(splitLine[0], splitLine[1]);
+                placeInWeightslist(splitLine[1]);
             }
 
             lines++;
@@ -131,21 +129,21 @@ public class VocabDataset  extends Dataset<double[], Integer> {
         return encoded.stream().mapToDouble(Integer::doubleValue).toArray();
     }
 
-    private void placeInMap(String word, String weight) {
+    private void placeInWeightslist(String weight) {
         String[] str = weight.split(" ");
 
         double[] doubleValues = Arrays.stream(str)
                 .mapToDouble(Double::parseDouble)
                 .toArray();
 
-        weightsMap.add(doubleValues);
+        allWeights.add(doubleValues);
     }
 
     private void createDoubleMatrixForWeights() {
-        double[][] xs = new double[weightsMap.size()][];
+        double[][] xs = new double[allWeights.size()][];
 
-        for (int i=0; i<weightsMap.size(); i++) {
-            xs[i] = Arrays.stream(weightsMap.get(i)).toArray();
+        for (int i = 0; i< allWeights.size(); i++) {
+            xs[i] = Arrays.stream(allWeights.get(i)).toArray();
         }
 
         pretrainedWeights = new DoubleMatrix(xs);

@@ -32,7 +32,7 @@ public class A4Main {
 
         boolean useTrainedWeights = false;
 
-        if (args[0].equalsIgnoreCase("part3")) {
+        if (args[0].equalsIgnoreCase("part3") || args[0].equalsIgnoreCase("part4")) {
             useTrainedWeights = true;
         }
 
@@ -50,15 +50,15 @@ public class A4Main {
 
         // load datasets
         System.out.println("\nLoading data...");
-        VocabDataset trainset = new VocabDataset(batchsize, true, rnd);
+        VocabDataset trainset = new VocabDataset(batchsize, true, rnd, args[5], useTrainedWeights);
         //TODO: only pass the weights in the training set.
-        trainset.fromFile(args[2], args[5], useTrainedWeights);
+        trainset.fromFile(args[2]);
 
-        VocabDataset devset = new VocabDataset(batchsize, false, rnd);
-        devset.fromFile(args[3], args[5], false);
+        VocabDataset devset = new VocabDataset(batchsize, false, rnd, args[5], false);
+        devset.fromFile(args[3]);
 
-        VocabDataset testset = new VocabDataset(batchsize, false, rnd);
-        testset.fromFile(args[4], args[5], false);
+        VocabDataset testset = new VocabDataset(batchsize, false, rnd, args[5], false);
+        testset.fromFile(args[4]);
 
         System.out.printf("train: %d instances\n", trainset.getSize());
         System.out.printf("dev: %d instances\n", devset.getSize());
@@ -69,6 +69,7 @@ public class A4Main {
         int indims = trainset.getInputDims();
         int outdims = 50;
         Sequential net;
+        DoubleMatrix pretrainedWeights = trainset.getPretrainedWeights();
 
         GradientChecker gradientChecker = new GradientChecker();
         CrossEntropy loss = new CrossEntropy();
@@ -93,7 +94,7 @@ public class A4Main {
 
             case "part2":
                 net = new Sequential(new Layer[]{
-                        // Input to first hidden layer.
+                        // Input to first hidden layer (Embedding bag).
                         new EmbeddingBag(indims, hiddimsEmbedding, new WeightInitXavier()),
                         new ReLU(),
                         // first to second hidden layer.
@@ -110,10 +111,27 @@ public class A4Main {
                 break;
 
             case "part3":
-                DoubleMatrix pretrainedWeights = trainset.getPretrainedWeights();
                 net = new Sequential(new Layer[]{
-                        // Input to first hidden layer.
-                        new EmbeddingBag(indims, hiddimsEmbedding, pretrainedWeights),
+                        // Input to first hidden layer (Embedding bag). Use pretrained weights.
+                        new EmbeddingBag(indims, hiddimsEmbedding, pretrainedWeights, false),
+                        new ReLU(),
+                        // first to second hidden layer.
+                        new Linear(hiddimsEmbedding, hiddimsOthers, new WeightInitXavier()),
+                        new ReLU(),
+                        // second to third hidden layer.
+                        new Linear(hiddimsOthers, hiddimsOthers, new WeightInitXavier()),
+                        new ReLU(),
+                        // third hidden layer to output.
+                        new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
+                        new Softmax()});
+
+                trainAndEval(net, trainset, devset, testset);
+                break;
+            case "part4":
+                net = new Sequential(new Layer[]{
+                        // Input to first hidden layer (Embedding bag). Use pretrained weights.
+                        // Freeze the weights - i.e. do not update them during training.
+                        new EmbeddingBag(indims, hiddimsEmbedding, pretrainedWeights, true),
                         new ReLU(),
                         // first to second hidden layer.
                         new Linear(hiddimsEmbedding, hiddimsOthers, new WeightInitXavier()),
@@ -175,30 +193,6 @@ public class A4Main {
         DoubleMatrix Y = new DoubleMatrix(ys.length, 1, ys);
         return new Pair<DoubleMatrix, DoubleMatrix>(X, Y);
     }
-
-//    /**
-//     * Convert a mini-batch of the vocabulary dataset to data structure that can be used by the network
-//     *
-//     * @param batch a list of MNIST items, each of which is a pair of (input image, output label)
-//     * @return two DoubleMatrix objects: X (input) and Y (labels)
-//     */
-//    public static List<int[]> fromBatch(List<Pair<double[], Integer>> batch) {
-//        if (batch == null)
-//            return null;
-//
-//        List<int[]> wordsIndices = new ArrayList<>();
-//
-//
-//        double[][] xs = new double[batch.size()][];
-//        double[] ys = new double[batch.size()];
-//        for (int i = 0; i < batch.size(); i++) {
-//            xs[i] = batch.get(i).first;
-//            ys[i] = (double) batch.get(i).second;
-//        }
-//        DoubleMatrix X = new DoubleMatrix(xs);
-//        DoubleMatrix Y = new DoubleMatrix(ys.length, 1, ys);
-//        return new Pair<DoubleMatrix, DoubleMatrix>(X, Y);
-//    }
 
     //TODO: change!
 

@@ -20,13 +20,14 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
     List<int[]> X;  // store input X for computing backward, each element in this list is a sample (an array of word indices).
     DoubleMatrix gW;    // gradient of W
     private int vocabSize, batchSize, outdims;
+    private boolean freeze;
 
     /**
-     * Constructor for EmbeddingBag
+     * Constructor for EmbeddingBag.
      *
-     * @param vocabSize (int) vocabulary size
-     * @param outdims   (int) output of this layer
-     * @param wInit     (WeightInit) weight initialisation method
+     * @param vocabSize (int) vocabulary size.
+     * @param outdims   (int) output of this layer.
+     * @param wInit     (WeightInit) weight initialisation method.
      */
     public EmbeddingBag(int vocabSize, int outdims, WeightInit wInit) {
         this.outdims = outdims;
@@ -36,12 +37,23 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
     }
 
 
-    public EmbeddingBag(int vocabSize, int outdims, DoubleMatrix pretrainedWeights) {
+    /**
+     * Overloaded constructor for EmbeddingBag. Used to pass in a double matrix containing pre-trained.
+     * weights.
+     *
+     * @param vocabSize (int) vocabulary size.
+     * @param outdims   (int) output of this layer.
+     * @param pretrainedWeights    pre-trained weights to be used by the network.
+     */
+    public EmbeddingBag(int vocabSize, int outdims, DoubleMatrix pretrainedWeights, boolean freeze) {
         this.outdims = outdims;
         this.vocabSize = vocabSize;
         // Assign pretrained weights.
         this.W = pretrainedWeights;
+//        System.out.println("\n\n DEBUG:: PRETRAINED WEIGHTS: "+ W.getRow(0)+"\n\n");
         this.gW = DoubleMatrix.zeros(vocabSize, outdims);
+        this.freeze = freeze;
+
     }
 
     /**
@@ -72,19 +84,22 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
 
     @Override
     public DoubleMatrix backward(DoubleMatrix gY) {
-        // Iterate through the out dimensions / nodes.
-        for (int d = 0; d < outdims; d++) {
-            // Iterate through the samples in the batch.
-            for (int s = 0; s < batchSize; s++) {
-                int[] indexes = X.get(s); // get indexes of current sample.
+        // if the layer is not frozen, then update the gradients of the weights.
+        if (!freeze) {
+            // Iterate through the out dimensions / nodes.
+            for (int d = 0; d < outdims; d++) {
+                // Iterate through the samples in the batch.
+                for (int s = 0; s < batchSize; s++) {
+                    int[] indexes = X.get(s); // get indexes of current sample.
 
-                // update gW at the specific index and dimension - with the value calculated.
-                for (int i = 0; i < indexes.length; i++) {
-                    // calculate value for current sample.
-                    double val = gY.get(s, d);
-                    // get the prior (before updating - summing) gradient value of the current index and the dimension.
-                    double prior = gW.get(indexes[i], d);
-                    gW.put(indexes[i], d, prior + val);
+                    // update gW at the specific index and dimension - with the value calculated.
+                    for (int i = 0; i < indexes.length; i++) {
+                        // calculate value for current sample.
+                        double val = gY.get(s, d);
+                        // get the prior (before updating - summing) gradient value of the current index and the dimension.
+                        double prior = gW.get(indexes[i], d);
+                        gW.put(indexes[i], d, prior + val);
+                    }
                 }
             }
         }
