@@ -3,6 +3,7 @@ package src;
 import org.jblas.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import minet.layer.init.*;
@@ -30,7 +31,7 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
     public EmbeddingBag(int vocabSize, int outdims, WeightInit wInit) {
         this.outdims = outdims;
         this.vocabSize = vocabSize;
-        this.W = wInit.generate(vocabSize, outdims);
+        this.W = wInit.generate(vocabSize, outdims); // initialised weight randomly.
         this.gW = DoubleMatrix.zeros(vocabSize, outdims);
     }
 
@@ -38,6 +39,7 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
     public EmbeddingBag(int vocabSize, int outdims, DoubleMatrix pretrainedWeights) {
         this.outdims = outdims;
         this.vocabSize = vocabSize;
+        // Assign pretrained weights.
         this.W = pretrainedWeights;
         this.gW = DoubleMatrix.zeros(vocabSize, outdims);
     }
@@ -68,7 +70,6 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
         return Y;
     }
 
-    // TODO: matrix multiplication with matmul.
     @Override
     public DoubleMatrix backward(DoubleMatrix gY) {
         // Iterate through the out dimensions / nodes.
@@ -144,6 +145,12 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
         return indexes.stream().mapToInt(i -> i).toArray();
     }
 
+    /**
+     * Get the sum of the weights for the indexes in the array passed in.
+     * @param indexes
+     * @param dimensionNumber
+     * @return
+     */
     private double getSumOfWeights(int[] indexes, int dimensionNumber) {
         double sumWeights = 0;
 
@@ -154,6 +161,5 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
         // return sum of weights as a double.
         return sumWeights;
     }
-
 
 }

@@ -13,10 +13,7 @@ import org.jblas.DoubleMatrix;
 import org.jblas.util.Logger;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import src.EmbeddingBag;
 
@@ -31,6 +28,12 @@ public class A4Main {
         if (args.length < 6) {
             System.out.println("Usage: java A4Main <part1/part2/part3/part4> <seed> <trainFile> <devFile> <testFile> <vocabFile> <classesFile>");
             return;
+        }
+
+        boolean useTrainedWeights = false;
+
+        if (args[0].equalsIgnoreCase("part3")) {
+            useTrainedWeights = true;
         }
 
         // set jblas random seed (for reproducibility)
@@ -48,13 +51,14 @@ public class A4Main {
         // load datasets
         System.out.println("\nLoading data...");
         VocabDataset trainset = new VocabDataset(batchsize, true, rnd);
-        trainset.fromFile(args[2], args[5]);
+        //TODO: only pass the weights in the training set.
+        trainset.fromFile(args[2], args[5], useTrainedWeights);
 
         VocabDataset devset = new VocabDataset(batchsize, false, rnd);
-        devset.fromFile(args[3], args[5]);
+        devset.fromFile(args[3], args[5], false);
 
         VocabDataset testset = new VocabDataset(batchsize, false, rnd);
-        testset.fromFile(args[4], args[5]);
+        testset.fromFile(args[4], args[5], false);
 
         System.out.printf("train: %d instances\n", trainset.getSize());
         System.out.printf("dev: %d instances\n", devset.getSize());
@@ -106,10 +110,10 @@ public class A4Main {
                 break;
 
             case "part3":
-                System.out.println("Meow");
+                DoubleMatrix pretrainedWeights = trainset.getPretrainedWeights();
                 net = new Sequential(new Layer[]{
                         // Input to first hidden layer.
-                        new EmbeddingBag(indims, hiddimsEmbedding, new WeightInitXavier()),
+                        new EmbeddingBag(indims, hiddimsEmbedding, pretrainedWeights),
                         new ReLU(),
                         // first to second hidden layer.
                         new Linear(hiddimsEmbedding, hiddimsOthers, new WeightInitXavier()),
@@ -254,6 +258,9 @@ public class A4Main {
                              VocabDataset devdata, int nEpochs, int patience) {
         long startTime = System.nanoTime(); // start timer.
 
+        List<Double> trainingAccuracies = new ArrayList<>();
+        List<Double> validationAccuracies = new ArrayList<>();
+
         int notAtPeak = 0;  // the number of times not at peak
         double peakAcc = -1;  // the best accuracy of the previous epochs
         double totalLoss = 0;  // the total loss of the current epoch
@@ -288,7 +295,13 @@ public class A4Main {
 
             // evaluate and print performance
             double trainAcc = eval(net, traindata);
+            // add trainAcc to the ArrayList storing all accuracies.
+            trainingAccuracies.add(trainAcc);
+
+            // add valAcc to the ArrayList storing all validation accuracies.
             double valAcc = eval(net, devdata);
+            validationAccuracies.add(valAcc);
+
             System.out.printf("epoch: %4d\tloss: %5.4f\ttrain-accuracy: %3.4f\tdev-accuracy: %3.4f\n", e, totalLoss, trainAcc, valAcc);
 
             // check termination condition
@@ -309,6 +322,8 @@ public class A4Main {
         long trainingDuration = (endTime - startTime) / 1000000000;
 
         System.out.println("\ntraining is finished");
+        System.out.println("Best Training Accuracy: " + Collections.max(trainingAccuracies));
+        System.out.println("Best Validation Accuracy: " + Collections.max(validationAccuracies));
         System.out.println("Total training time: " + trainingDuration + " seconds");
     }
 

@@ -4,6 +4,7 @@ import minet.data.Dataset;
 import minet.util.Pair;
 import org.jblas.DoubleMatrix;
 
+import javax.print.Doc;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -16,7 +17,13 @@ public class VocabDataset  extends Dataset<double[], Integer> {
     // number of input features
     int inputDims;
 
-    HashMap<String, DoubleMatrix> weightsMap = new HashMap<>();
+    ArrayList<double[]> weightsMap = new ArrayList<>();
+
+    DoubleMatrix pretrainedWeights;
+
+    public DoubleMatrix getPretrainedWeights() {
+        return pretrainedWeights;
+    }
 
     /**
      * Get the number of input dimensions.
@@ -45,13 +52,13 @@ public class VocabDataset  extends Dataset<double[], Integer> {
     /**
      * Load data from file and vocabulary.
      */
-    public void fromFile(String path, String pathVocabulary) throws IOException {
+    public void fromFile(String path, String pathVocabulary, boolean trainingWeights) throws IOException {
         items = new ArrayList<Pair<double[], Integer>>();
 
         // get the number of instances (elements) and number of features.
-        int instances = countLinesInFile(path);
-        inputDims = countLinesInFile(pathVocabulary);
-//        inputDims = countLinesInFile(pathVocabulary, true);
+        int instances = countLinesInFile(path, trainingWeights, false);
+        inputDims = countLinesInFile(pathVocabulary, trainingWeights, true);
+
 
         FileReader fr = new FileReader(path);
         BufferedReader br = new BufferedReader(fr);
@@ -77,38 +84,27 @@ public class VocabDataset  extends Dataset<double[], Integer> {
      * @return the number of lines.
      * @throws IOException
      */
-    public int countLinesInFile(String path) throws IOException {
+    public int countLinesInFile(String path, boolean trainingWeights, boolean vocabulary) throws IOException {
         BufferedReader br = new BufferedReader( new FileReader(path));
         int lines = 0;
-        while (br.readLine() != null) {
+        String line;
+        while ((line = br.readLine()) != null) {
+            // if the trainingWeights flag is true - then read in the weights provided in the file.
+            if (trainingWeights && vocabulary) {
+                String[] splitLine = line.split(" ", 2);
+                placeInMap(splitLine[0], splitLine[1]);
+            }
+
             lines++;
         }
+        // create double matrix for the weights passed in.
+        if (trainingWeights && vocabulary) {
+            createDoubleMatrixForWeights();
+        }
+
         br.close();
         return lines;
     }
-
-//    public int countLinesInFile(String path, boolean f) throws IOException {
-//        BufferedReader br = new BufferedReader( new FileReader(path));
-//
-////        boolean flag = false;
-//
-//        int lines = 0;
-//        String line;
-//        while ((line = br.readLine()) != null) {
-//            String[] splitLine = line.split(" ", 2);
-//            weightsMap.put(splitLine[0], splitLine[1]);
-//            lines++;
-//        }
-//
-//        return lines;
-////        int lines = 0;
-////        while (br.readLine() != null) {
-////            lines++;
-////        }
-////        br.close();
-////        return lines;
-//    }
-
 
     /**
      * One hot encode the given instance - Bag-of-Word strategy.
@@ -135,5 +131,23 @@ public class VocabDataset  extends Dataset<double[], Integer> {
         return encoded.stream().mapToDouble(Integer::doubleValue).toArray();
     }
 
+    private void placeInMap(String word, String weight) {
+        String[] str = weight.split(" ");
 
+        double[] doubleValues = Arrays.stream(str)
+                .mapToDouble(Double::parseDouble)
+                .toArray();
+
+        weightsMap.add(doubleValues);
+    }
+
+    private void createDoubleMatrixForWeights() {
+        double[][] xs = new double[weightsMap.size()][];
+
+        for (int i=0; i<weightsMap.size(); i++) {
+            xs[i] = Arrays.stream(weightsMap.get(i)).toArray();
+        }
+
+        pretrainedWeights = new DoubleMatrix(xs);
+    }
 }
