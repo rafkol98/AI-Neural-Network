@@ -51,7 +51,6 @@ public class SGD implements Optimizer {
             DoubleMatrix g = gIter.next();
             g.fill(0);
         }
-        System.out.println("DEBUG:: !IMPORTANT - GRADIENTS RESET");
     }
 
     @Override
@@ -60,10 +59,8 @@ public class SGD implements Optimizer {
         ListIterator<DoubleMatrix> gIter = this.grads.listIterator();
         while (gIter.hasNext() && wIter.hasNext()) {
             DoubleMatrix w = wIter.next();
-            System.out.println("\n\nDEBUG::\n weights before:: "+w.getRow(0)+"\n");
             DoubleMatrix g = gIter.next();
             w.addi(g.mul(-this.lr));
-            System.out.println("weights after:: "+w.getRow(0)+"\n\n");
         }
     }
 }

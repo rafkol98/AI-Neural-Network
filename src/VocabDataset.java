@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class VocabDataset  extends Dataset<double[], Integer> {
+public class VocabDataset extends Dataset<double[], Integer> {
 
     // number of input features
     private int inputDims;
