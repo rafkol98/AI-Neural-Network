@@ -5,6 +5,8 @@ package minet.layer;
 
 import org.jblas.DoubleMatrix;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 
@@ -19,7 +21,16 @@ public class Sequential implements Layer, java.io.Serializable {
 	
 	private static final long serialVersionUID = 2172439814486831959L;
 	
-	Layer[] layers;         
+	Layer[] layers;
+
+
+    /**
+     * Make a copy of Sequential.
+     * @param net
+     */
+    public Sequential(Sequential net) {
+      this.layers = net.layers;
+    }
 
     public Sequential(Layer[] layers) {
         this.layers = layers;

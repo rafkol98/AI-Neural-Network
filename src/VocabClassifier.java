@@ -16,6 +16,7 @@ import java.util.List;
 public class VocabClassifier {
 
     private boolean verbose;
+    private boolean tuning = false;
 
     public VocabClassifier(boolean verbose) {
         this.verbose = verbose;
@@ -23,6 +24,7 @@ public class VocabClassifier {
 
     /**
      * Train the model and return the best validation accuracy found. Used for randomizedSearch tuning procedure.
+     *
      * @param net
      * @param trainset
      * @param devset
@@ -32,14 +34,13 @@ public class VocabClassifier {
      * @return
      */
     public double tuningProcess(Sequential net, VocabDataset trainset, VocabDataset devset, double learningRate, int maxEpochs, int patience) {
+        tuning = true;
         CrossEntropy loss = new CrossEntropy();
         Optimizer sgd = new SGD(net, learningRate);
 
         double bestValAcc = train(net, loss, sgd, trainset, devset, maxEpochs, patience);
-        System.out.println("Best validation accuracy: "+ bestValAcc+"\n");
         return bestValAcc;
     }
-
 
 
     public void trainAndEval(Sequential net, VocabDataset trainset, VocabDataset devset, VocabDataset testset, double learningRate, int maxEpochs, int patience) {
@@ -136,7 +137,7 @@ public class VocabClassifier {
      * @param patience  the maximum number of consecutive epochs where validation performance is allowed to non-increased, used for early stopping
      */
     public double train(Layer net, Loss loss, Optimizer optimizer, VocabDataset traindata,
-                             VocabDataset devdata, int nEpochs, int patience) {
+                        VocabDataset devdata, int nEpochs, int patience) {
         long startTime = System.nanoTime(); // start timer.
 
         List<Double> trainingAccuracies = new ArrayList<>();
@@ -206,10 +207,12 @@ public class VocabClassifier {
         // calculate training duration - divide by 10^-9 to convert ns to seconds.
         long trainingDuration = (endTime - startTime) / 1000000000;
 
-        System.out.println("\ntraining is finished");
-        System.out.println("Best Training Accuracy: " + Collections.max(trainingAccuracies));
-        System.out.println("Best Validation Accuracy: " + Collections.max(validationAccuracies));
-        System.out.println("Total training time: " + trainingDuration + " seconds");
+        if ((tuning && verbose) || (!tuning)) {
+            System.out.println("\ntraining is finished");
+            System.out.println("Best Training Accuracy: " + Collections.max(trainingAccuracies));
+            System.out.println("Best Validation Accuracy: " + Collections.max(validationAccuracies));
+            System.out.println("Total training time: " + trainingDuration + " seconds");
+        }
 
         // return best validation accuracy - used for hyperparameter tuning.
         return Collections.max(validationAccuracies);

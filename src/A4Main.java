@@ -20,6 +20,7 @@ import src.EmbeddingBag;
 public class A4Main {
 
     //TODO: maybe move the train and eval methods to another class.
+
     /**
      * Example A4Main class. Feel free to edit this file
      */
@@ -31,9 +32,12 @@ public class A4Main {
         }
 
         boolean useTrainedWeights = false;
+        boolean freeze = false;
 
         if (args[0].equalsIgnoreCase("part3") || args[0].equalsIgnoreCase("part4") || args[0].equalsIgnoreCase("part5")) {
             useTrainedWeights = true;
+            // if part 4 or 5, then freeze the weights - i.e. do not update them during training.
+            freeze = args[0].equalsIgnoreCase("part3") ? false : true;
         }
 
         // set jblas random seed (for reproducibility)
@@ -45,9 +49,21 @@ public class A4Main {
         Logger.getLogger().setLevel(Logger.WARNING);
 
         int batchsize = 50;
-        int hiddimsEmbedding = 100;
-        int hiddimsOthers = 200;
-        // hyperparameters.
+        int hiddimsEmbedding, hiddimsOthers;
+
+        // If we are using the words2vec embedding then the hidden dimensions of both embedding and the following
+        // layers are increased to 300 and 400 respectively.
+        if (args[0].equalsIgnoreCase("part5")) {
+            hiddimsEmbedding = 300;
+            hiddimsOthers = 400;
+        }
+        // Otherwise they have size of 100 and 200.
+        else {
+            hiddimsEmbedding = 100;
+            hiddimsOthers = 200;
+        }
+
+        // Hyperparameters.
         double learningRate = 0.1;
         int maxEpochs = 500;
         int patience = 10;
@@ -74,11 +90,27 @@ public class A4Main {
         Sequential net;
         DoubleMatrix pretrainedWeights = trainset.getPretrainedWeights();
 
-        // Determine if the network should print every step.
-        boolean verbose = false;
-        if (args[6] != null && args[6].equalsIgnoreCase("verbose")) {
-            verbose = true;
+        boolean verbose = true;
+        boolean tune = false;
+        if (args.length >= 8) {
+            // Silent mode - not printing each step
+            if (args[7].equalsIgnoreCase("silent")) {
+                verbose = false;
+            }
+
+            // Whether to run the randomized search hyperparameter tuner.
+            if (args.length >= 9 && args[8].equalsIgnoreCase("tune")) {
+                tune = true;
+            }
         }
+
+        // Hyperparameter tuning - EXTENSION.
+        HyperparameterTuning hyperparameterTuning;
+
+        // Arraylists containing values to try in Hyperparameter tuning.
+        List<Double> learningRatesToTry = Arrays.asList(0.0001, 0.001, 0.01, 0.1, 0.5, 1.0, 2.0, 10.0);
+        List<Integer> maxEpochsToTry = Arrays.asList(100, 200, 300, 500, 1000);
+        List<Integer> patienceToTry = Arrays.asList(5, 10, 15, 20);
 
 
         GradientChecker gradientChecker = new GradientChecker();
@@ -88,21 +120,29 @@ public class A4Main {
         CrossEntropy loss = new CrossEntropy();
         switch (args[0]) {
             case "part1":
-                net = new Sequential(new Layer[]{
-                        // Input to first hidden layer.
-                        new Linear(indims, hiddimsEmbedding, new WeightInitXavier()),
-                        new ReLU(),
-                        // first to second hidden layer.
-                        new Linear(hiddimsEmbedding, hiddimsOthers, new WeightInitXavier()),
-                        new ReLU(),
-                        // second to third hidden layer.
-                        new Linear(hiddimsOthers, hiddimsOthers, new WeightInitXavier()),
-                        new ReLU(),
-                        // third hidden layer to output.
-                        new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
-                        new Softmax()});
+                    net = new Sequential(new Layer[]{
+                            // Input to first hidden layer.
+                            new Linear(indims, hiddimsEmbedding, new WeightInitXavier()),
+                            new ReLU(),
+                            // first to second hidden layer.
+                            new Linear(hiddimsEmbedding, hiddimsOthers, new WeightInitXavier()),
+                            new ReLU(),
+                            // second to third hidden layer.
+                            new Linear(hiddimsOthers, hiddimsOthers, new WeightInitXavier()),
+                            new ReLU(),
+                            // third hidden layer to output.
+                            new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
+                            new Softmax()});
 
-                vocabClassifier.trainAndEval(net, trainset, devset, testset, learningRate, maxEpochs, patience);
+                    //TODO: function it.
+                if (!tune) {
+                    vocabClassifier.trainAndEval(net, trainset, devset, testset, learningRate, maxEpochs, patience);
+                } else {
+                    // perform hyperparameter tuning using randomized search method.
+                    hyperparameterTuning = new HyperparameterTuning(net, vocabClassifier, learningRatesToTry, maxEpochsToTry, patienceToTry);
+                    hyperparameterTuning.randomizedSearch(20, trainset, devset, testset, verbose);
+                }
+
                 break;
 
             case "part2":
@@ -120,54 +160,22 @@ public class A4Main {
                         new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
                         new Softmax()});
 
-                vocabClassifier.trainAndEval(net, trainset, devset, testset, learningRate, maxEpochs, patience);
+                if (!tune) {
+                    vocabClassifier.trainAndEval(net, trainset, devset, testset, learningRate, maxEpochs, patience);
+                } else {
+                    // perform hyperparameter tuning using randomized search method.
+                    hyperparameterTuning = new HyperparameterTuning(net, vocabClassifier, learningRatesToTry, maxEpochsToTry, patienceToTry);
+                    hyperparameterTuning.randomizedSearch(20, trainset, devset, testset, verbose);
+                }
                 break;
 
-                //TODO: merge part 3, 4, and 5.
             case "part3":
-                net = new Sequential(new Layer[]{
-                        // Input to first hidden layer (Embedding bag). Use pretrained weights.
-                        new EmbeddingBag(indims, hiddimsEmbedding, pretrainedWeights, false),
-                        new ReLU(),
-                        // first to second hidden layer.
-                        new Linear(hiddimsEmbedding, hiddimsOthers, new WeightInitXavier()),
-                        new ReLU(),
-                        // second to third hidden layer.
-                        new Linear(hiddimsOthers, hiddimsOthers, new WeightInitXavier()),
-                        new ReLU(),
-                        // third hidden layer to output.
-                        new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
-                        new Softmax()});
-
-                vocabClassifier.trainAndEval(net, trainset, devset, testset, learningRate, maxEpochs, patience);
-                break;
             case "part4":
-                net = new Sequential(new Layer[]{
-                        // Input to first hidden layer (Embedding bag). Use pretrained weights.
-                        // Freeze the weights - i.e. do not update them during training.
-                        new EmbeddingBag(indims, hiddimsEmbedding, pretrainedWeights, true),
-                        new ReLU(),
-                        // first to second hidden layer.
-                        new Linear(hiddimsEmbedding, hiddimsOthers, new WeightInitXavier()),
-                        new ReLU(),
-                        // second to third hidden layer.
-                        new Linear(hiddimsOthers, hiddimsOthers, new WeightInitXavier()),
-                        new ReLU(),
-                        // third hidden layer to output.
-                        new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
-                        new Softmax()});
-
-                vocabClassifier.trainAndEval(net, trainset, devset, testset, learningRate, maxEpochs, patience);
-                break;
-
             case "part5":
-                // Changed dimensions due to the words2vec vocabulary having 300 dimensions.
-                hiddimsEmbedding = 300;
-                hiddimsOthers = 400;
                 net = new Sequential(new Layer[]{
                         // Input to first hidden layer (Embedding bag). Use pretrained weights.
-                        // Freeze the weights - i.e. do not update them during training.
-                        new EmbeddingBag(indims, hiddimsEmbedding, pretrainedWeights, true),
+                        // Decide whether to freeze them or not using the freeze flag.
+                        new EmbeddingBag(indims, hiddimsEmbedding, pretrainedWeights, freeze),
                         new ReLU(),
                         // first to second hidden layer.
                         new Linear(hiddimsEmbedding, hiddimsOthers, new WeightInitXavier()),
@@ -179,8 +187,15 @@ public class A4Main {
                         new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
                         new Softmax()});
 
-                vocabClassifier.trainAndEval(net, trainset, devset, testset, learningRate, maxEpochs, patience);
+                if (!tune) {
+                    vocabClassifier.trainAndEval(net, trainset, devset, testset, learningRate, maxEpochs, patience);
+                } else {
+                    // perform hyperparameter tuning using randomized search method.
+                    hyperparameterTuning = new HyperparameterTuning(net, vocabClassifier, learningRatesToTry, maxEpochsToTry, patienceToTry);
+                    hyperparameterTuning.randomizedSearch(20, trainset, devset, testset, verbose);
+                }
                 break;
+
             default:
                 System.out.println("Please select part1, part2, part3, part4 or part 5.");
         }
