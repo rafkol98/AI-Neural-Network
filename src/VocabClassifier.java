@@ -15,14 +15,34 @@ import java.util.List;
 
 public class VocabClassifier {
 
-    public VocabClassifier() {
+    private boolean verbose;
+
+    public VocabClassifier(boolean verbose) {
+        this.verbose = verbose;
     }
 
-    public void trainAndEval(Sequential net, VocabDataset trainset, VocabDataset devset, VocabDataset testset) {
-        double learningRate = 0.1;
-        int maxEpochs = 500;
-        int patience = 10;
+    /**
+     * Train the model and return the best validation accuracy found. Used for randomizedSearch tuning procedure.
+     * @param net
+     * @param trainset
+     * @param devset
+     * @param learningRate
+     * @param maxEpochs
+     * @param patience
+     * @return
+     */
+    public double tuningProcess(Sequential net, VocabDataset trainset, VocabDataset devset, double learningRate, int maxEpochs, int patience) {
+        CrossEntropy loss = new CrossEntropy();
+        Optimizer sgd = new SGD(net, learningRate);
 
+        double bestValAcc = train(net, loss, sgd, trainset, devset, maxEpochs, patience);
+        System.out.println("Best validation accuracy: "+ bestValAcc+"\n");
+        return bestValAcc;
+    }
+
+
+
+    public void trainAndEval(Sequential net, VocabDataset trainset, VocabDataset devset, VocabDataset testset, double learningRate, int maxEpochs, int patience) {
         CrossEntropy loss = new CrossEntropy();
         Optimizer sgd = new SGD(net, learningRate);
         System.out.println(net);
@@ -30,7 +50,7 @@ public class VocabClassifier {
         // train network
         System.out.println("\nTraining...");
 
-        train(net, loss, sgd, trainset, devset, maxEpochs, patience);
+        double bestValAcc = train(net, loss, sgd, trainset, devset, maxEpochs, patience);
 
         // perform on test set
         double testAcc = eval(net, testset);
@@ -115,7 +135,7 @@ public class VocabClassifier {
      * @param nEpochs   the maximum number of training epochs
      * @param patience  the maximum number of consecutive epochs where validation performance is allowed to non-increased, used for early stopping
      */
-    public void train(Layer net, Loss loss, Optimizer optimizer, VocabDataset traindata,
+    public double train(Layer net, Loss loss, Optimizer optimizer, VocabDataset traindata,
                              VocabDataset devdata, int nEpochs, int patience) {
         long startTime = System.nanoTime(); // start timer.
 
@@ -163,12 +183,16 @@ public class VocabClassifier {
             double valAcc = eval(net, devdata);
             validationAccuracies.add(valAcc);
 
-            System.out.printf("epoch: %4d\tloss: %5.4f\ttrain-accuracy: %3.4f\tdev-accuracy: %3.4f\n", e, totalLoss, trainAcc, valAcc);
+            if (verbose) {
+                System.out.printf("epoch: %4d\tloss: %5.4f\ttrain-accuracy: %3.4f\tdev-accuracy: %3.4f\n", e, totalLoss, trainAcc, valAcc);
+            }
 
             // check termination condition
             if (valAcc <= peakAcc) {
                 notAtPeak += 1;
-                System.out.printf("not at peak %d times consecutively\n", notAtPeak);
+                if (verbose) {
+                    System.out.printf("not at peak %d times consecutively\n", notAtPeak);
+                }
             } else {
                 notAtPeak = 0;
                 peakAcc = valAcc;
@@ -186,5 +210,8 @@ public class VocabClassifier {
         System.out.println("Best Training Accuracy: " + Collections.max(trainingAccuracies));
         System.out.println("Best Validation Accuracy: " + Collections.max(validationAccuracies));
         System.out.println("Total training time: " + trainingDuration + " seconds");
+
+        // return best validation accuracy - used for hyperparameter tuning.
+        return Collections.max(validationAccuracies);
     }
 }

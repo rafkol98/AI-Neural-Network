@@ -26,7 +26,7 @@ public class A4Main {
     public static void main(String[] args) throws IOException {
 
         if (args.length < 6) {
-            System.out.println("Usage: java A4Main <part1/part2/part3/part4> <seed> <trainFile> <devFile> <testFile> <vocabFile> <classesFile>");
+            System.out.println("Usage: java A4Main <part1/part2/part3/part4/part5> <seed> <trainFile> <devFile> <testFile> <vocabFile> <classesFile>");
             return;
         }
 
@@ -47,6 +47,10 @@ public class A4Main {
         int batchsize = 50;
         int hiddimsEmbedding = 100;
         int hiddimsOthers = 200;
+        // hyperparameters.
+        double learningRate = 0.1;
+        int maxEpochs = 500;
+        int patience = 10;
 
         // load datasets
         System.out.println("\nLoading data...");
@@ -70,8 +74,15 @@ public class A4Main {
         Sequential net;
         DoubleMatrix pretrainedWeights = trainset.getPretrainedWeights();
 
+        // Determine if the network should print every step.
+        boolean verbose = false;
+        if (args[6] != null && args[6].equalsIgnoreCase("verbose")) {
+            verbose = true;
+        }
+
+
         GradientChecker gradientChecker = new GradientChecker();
-        VocabClassifier vocabClassifier = new VocabClassifier();
+        VocabClassifier vocabClassifier = new VocabClassifier(verbose);
 
         // TODO: redundant - make it all the same.
         CrossEntropy loss = new CrossEntropy();
@@ -91,7 +102,7 @@ public class A4Main {
                         new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
                         new Softmax()});
 
-                vocabClassifier.trainAndEval(net, trainset, devset, testset);
+                vocabClassifier.trainAndEval(net, trainset, devset, testset, learningRate, maxEpochs, patience);
                 break;
 
             case "part2":
@@ -109,9 +120,10 @@ public class A4Main {
                         new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
                         new Softmax()});
 
-                vocabClassifier.trainAndEval(net, trainset, devset, testset);
+                vocabClassifier.trainAndEval(net, trainset, devset, testset, learningRate, maxEpochs, patience);
                 break;
 
+                //TODO: merge part 3, 4, and 5.
             case "part3":
                 net = new Sequential(new Layer[]{
                         // Input to first hidden layer (Embedding bag). Use pretrained weights.
@@ -127,7 +139,7 @@ public class A4Main {
                         new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
                         new Softmax()});
 
-                vocabClassifier.trainAndEval(net, trainset, devset, testset);
+                vocabClassifier.trainAndEval(net, trainset, devset, testset, learningRate, maxEpochs, patience);
                 break;
             case "part4":
                 net = new Sequential(new Layer[]{
@@ -145,10 +157,11 @@ public class A4Main {
                         new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
                         new Softmax()});
 
-                vocabClassifier.trainAndEval(net, trainset, devset, testset);
+                vocabClassifier.trainAndEval(net, trainset, devset, testset, learningRate, maxEpochs, patience);
                 break;
 
             case "part5":
+                // Changed dimensions due to the words2vec vocabulary having 300 dimensions.
                 hiddimsEmbedding = 300;
                 hiddimsOthers = 400;
                 net = new Sequential(new Layer[]{
@@ -166,10 +179,10 @@ public class A4Main {
                         new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
                         new Softmax()});
 
-                vocabClassifier.trainAndEval(net, trainset, devset, testset);
+                vocabClassifier.trainAndEval(net, trainset, devset, testset, learningRate, maxEpochs, patience);
                 break;
             default:
-                System.out.println("Please select part1, part2, part3 or part4.");
+                System.out.println("Please select part1, part2, part3, part4 or part 5.");
         }
     }
 }
