@@ -59,8 +59,8 @@ public class A4Main {
         }
         // Otherwise they have size of 100 and 200.
         else {
-            hiddimsEmbedding = 100;
-            hiddimsOthers = 200;
+            hiddimsEmbedding = 2;
+            hiddimsOthers = 3;
         }
 
         // Hyperparameters.
@@ -108,7 +108,7 @@ public class A4Main {
         HyperparameterTuning hyperparameterTuning;
 
         // Arraylists containing values to try in Hyperparameter tuning.
-        List<Double> learningRatesToTry = Arrays.asList(0.0001, 0.001, 0.01, 0.1, 0.5, 1.0, 2.0, 10.0);
+        List<Double> learningRatesToTry = Arrays.asList(0.0001, 0.001, 0.01, 0.1, 0.5, 1.0);
         List<Integer> maxEpochsToTry = Arrays.asList(100, 200, 300, 500, 1000);
         List<Integer> patienceToTry = Arrays.asList(5, 10, 15, 20);
 
@@ -139,8 +139,8 @@ public class A4Main {
                     vocabClassifier.trainAndEval(net, trainset, devset, testset, learningRate, maxEpochs, patience);
                 } else {
                     // perform hyperparameter tuning using randomized search method.
-                    hyperparameterTuning = new HyperparameterTuning(net, vocabClassifier, learningRatesToTry, maxEpochsToTry, patienceToTry);
-                    hyperparameterTuning.randomizedSearch(20, trainset, devset, testset, verbose);
+                    hyperparameterTuning = new HyperparameterTuning(indims, hiddimsEmbedding, hiddimsOthers, outdims, vocabClassifier, learningRatesToTry, maxEpochsToTry, patienceToTry);
+                    hyperparameterTuning.randomizedSearch(30, trainset, devset, testset, verbose);
                 }
 
                 break;
@@ -164,8 +164,8 @@ public class A4Main {
                     vocabClassifier.trainAndEval(net, trainset, devset, testset, learningRate, maxEpochs, patience);
                 } else {
                     // perform hyperparameter tuning using randomized search method.
-                    hyperparameterTuning = new HyperparameterTuning(net, vocabClassifier, learningRatesToTry, maxEpochsToTry, patienceToTry);
-                    hyperparameterTuning.randomizedSearch(20, trainset, devset, testset, verbose);
+                    hyperparameterTuning = new HyperparameterTuning(indims, hiddimsEmbedding, hiddimsOthers, outdims, vocabClassifier, learningRatesToTry, maxEpochsToTry, patienceToTry);
+                    hyperparameterTuning.randomizedSearch(30, trainset, devset, testset, verbose);
                 }
                 break;
 
@@ -191,8 +191,8 @@ public class A4Main {
                     vocabClassifier.trainAndEval(net, trainset, devset, testset, learningRate, maxEpochs, patience);
                 } else {
                     // perform hyperparameter tuning using randomized search method.
-                    hyperparameterTuning = new HyperparameterTuning(net, vocabClassifier, learningRatesToTry, maxEpochsToTry, patienceToTry);
-                    hyperparameterTuning.randomizedSearch(20, trainset, devset, testset, verbose);
+                    hyperparameterTuning = new HyperparameterTuning(indims, hiddimsEmbedding, hiddimsOthers, outdims, vocabClassifier, learningRatesToTry, maxEpochsToTry, patienceToTry);
+                    hyperparameterTuning.randomizedSearch(30, trainset, devset, testset, verbose);
                 }
                 break;
 

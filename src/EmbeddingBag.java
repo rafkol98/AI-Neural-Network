@@ -33,6 +33,8 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
         this.outdims = outdims;
         this.vocabSize = vocabSize;
         this.W = wInit.generate(vocabSize, outdims); // initialised weight randomly.
+        System.out.println("INITIAL WEIGHTS");
+        System.out.println(W);
         this.gW = DoubleMatrix.zeros(vocabSize, outdims);
     }
 
@@ -50,7 +52,6 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
         this.vocabSize = vocabSize;
         // Assign pretrained weights.
         this.W = pretrainedWeights;
-//        System.out.println("\n\n DEBUG:: PRETRAINED WEIGHTS: "+ W.getRow(0)+"\n\n");
         this.gW = DoubleMatrix.zeros(vocabSize, outdims);
         this.freeze = freeze;
 
@@ -74,6 +75,8 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
         for (int i = 0; i < batchSize; i++) {
             // iterate through the out dimensions.
             for (int d = 0; d < outdims; d++) {
+                System.out.println("Sample number "+i+" dimension: "+d+ " | indexes: "+Arrays.toString(X.get(i)));
+                printSuitableWeights(X.get(i), d);
                 double sumOfWeightsForNode = getSumOfWeights(X.get(i), d); // get sum of weights for the node.
                 Y.put(i, d, sumOfWeightsForNode);
             }
@@ -173,8 +176,17 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
             sumWeights += W.get(indexes[i], dimensionNumber);
         }
 
+        System.out.println("Sum weight: " + sumWeights+"\n");
         // return sum of weights as a double.
         return sumWeights;
     }
 
+    private void printSuitableWeights(int[] indexes, int dimensionNumber) {
+        String weights = "";
+        for (int i = 0; i < indexes.length; i++) {
+            weights += " "+ W.get(indexes[i], dimensionNumber);
+        }
+
+        System.out.println("All weights of sample: "+weights);
+    }
 }

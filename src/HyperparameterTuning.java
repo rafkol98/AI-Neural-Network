@@ -1,29 +1,33 @@
 package src;
 
-import minet.layer.Sequential;
+import minet.layer.*;
+import minet.layer.init.WeightInitXavier;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class HyperparameterTuning {
 
-    private Sequential net;
-
     // The hyperparameters to try.
     private List<Double> learningRatesToTry;
     private List<Integer> maxEpochsToTry;
     private List<Integer> patienceToTry;
     private VocabClassifier vocabClassifier;
+    private int indims, hiddimsEmbedding, hiddimsOthers, outdims;
+
 
     /**
      * Create a new hyperparameter tuning instance.
-     * @param net
+     *
      * @param learningRatesToTry
      * @param maxEpochsToTry
      * @param patienceToTry
      */
-    public HyperparameterTuning(Sequential net, VocabClassifier vocabClassifier, List<Double> learningRatesToTry, List<Integer> maxEpochsToTry, List<Integer> patienceToTry) {
-        this.net = net;
+    public HyperparameterTuning(int indims, int hiddimsEmbedding, int hiddimsOthers, int outdims, VocabClassifier vocabClassifier, List<Double> learningRatesToTry, List<Integer> maxEpochsToTry, List<Integer> patienceToTry) {
+        this.indims = indims;
+        this.hiddimsEmbedding = hiddimsEmbedding;
+        this.hiddimsOthers = hiddimsOthers;
+        this.outdims = outdims;
         this.vocabClassifier = vocabClassifier;
         this.learningRatesToTry = learningRatesToTry;
         this.maxEpochsToTry = maxEpochsToTry;
@@ -33,6 +37,7 @@ public class HyperparameterTuning {
     /**
      * Use the randomized search method to find the best hyperparameters for the model.
      * It is very IMPORTANT to only use the validation set to determine hyperparameters -> avoid overfitting.
+     *
      * @param iterations
      */
     public void randomizedSearch(int iterations, VocabDataset trainset, VocabDataset devset, VocabDataset testset, boolean verbose) {
@@ -47,21 +52,21 @@ public class HyperparameterTuning {
         System.out.println("HYPERPARAMETER TUNING STARTING");
 
         // Try out different combinations of hyperparameters.
-        for (int i=0; i<iterations; i++) {
-            // Make a temporary net with the layers of the passed in net.
-            Sequential tempNet = new Sequential(net);
+        for (int i = 0; i < iterations; i++) {
+            // Make a new temporary net to train using the randomly selected hyperparameters.
+            Sequential net = createNewNetwork();
 
             // Get random index of value to try for each hyperparameter.
             double randomLearningRate = learningRatesToTry.get(getRandomIndex(learningRatesToTry.size()));
             int randomMaxEpochs = maxEpochsToTry.get(getRandomIndex(maxEpochsToTry.size()));
             int randomPatience = patienceToTry.get(getRandomIndex(patienceToTry.size()));
 
-            System.out.println("\nIteration: "+ i);
+            System.out.println("\nIteration: " + i);
 //            if (verbose) {
-                System.out.println("HYPER-PARAMETERS RANDOMLY SELECTED\nlearningRate: " + randomLearningRate+ ", maxEpochs: "+ randomMaxEpochs+ ", patience: "+ randomPatience);
+            System.out.println("HYPER-PARAMETERS CHOSEN:\nlearningRate: " + randomLearningRate + ", maxEpochs: " + randomMaxEpochs + ", patience: " + randomPatience);
 //            }
             // Get best validation accuracy of the network using the randomly selected hyperparameter values.
-            double valAcc = vocabClassifier.tuningProcess(tempNet, trainset, devset, randomLearningRate, randomMaxEpochs, randomPatience);
+            double valAcc = vocabClassifier.tuningProcess(net, trainset, devset, randomLearningRate, randomMaxEpochs, randomPatience);
 
             if (valAcc > bestAccuracy) {
                 bestAccuracy = valAcc; // update the best accuracy value.
@@ -73,16 +78,33 @@ public class HyperparameterTuning {
             }
         }
 
-        Sequential finalNet = new Sequential(net);
+        Sequential finalNet = createNewNetwork();
         System.out.println("\n\nFINISHED TUNING");
-        System.out.println("BEST HYPER-PARAMETERS FOUND \n learningRate: " + learningRateOnBestResult + ", maxEpochs: "+ maxEpochsOnBestResult + ", patience: "+ patienceOnBestResult);
+        System.out.println("BEST HYPER-PARAMETERS FOUND \n learningRate: " + learningRateOnBestResult + ", maxEpochs: " + maxEpochsOnBestResult + ", patience: " + patienceOnBestResult);
         vocabClassifier.trainAndEval(finalNet, trainset, devset, testset, learningRateOnBestResult, maxEpochsOnBestResult, patienceOnBestResult);
     }
 
     public int getRandomIndex(int listSize) {
-        return (int)(Math.random() * listSize);
+        return (int) (Math.random() * listSize);
     }
 
 
+    public Sequential createNewNetwork() {
+        Sequential newNet = new Sequential(new Layer[]{
+                // Input to first hidden layer (Embedding bag).
+                new EmbeddingBag(indims, hiddimsEmbedding, new WeightInitXavier()),
+                new ReLU(),
+                // first to second hidden layer.
+                new Linear(hiddimsEmbedding, hiddimsOthers, new WeightInitXavier()),
+                new ReLU(),
+                // second to third hidden layer.
+                new Linear(hiddimsOthers, hiddimsOthers, new WeightInitXavier()),
+                new ReLU(),
+                // third hidden layer to output.
+                new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
+                new Softmax()});
+
+        return newNet;
+    }
 
 }

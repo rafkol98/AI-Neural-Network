@@ -53,6 +53,7 @@ public class VocabDataset extends Dataset<double[], Integer> {
     public void fromFile(String path) throws IOException {
         items = new ArrayList<Pair<double[], Integer>>();
 
+        System.out.println("path: "+path);
         // get the number of instances (elements) and number of features.
         int instances = countLinesInFile(path, trainingWeights, false);
         inputDims = countLinesInFile(pathVocabulary, trainingWeights, true);
@@ -129,6 +130,11 @@ public class VocabDataset extends Dataset<double[], Integer> {
         return encoded.stream().mapToDouble(Integer::doubleValue).toArray();
     }
 
+    /**
+     * Convert weight string to a double array containing weight values. This double array is then added
+     * to the allWeights ArrayList.
+     * @param weight the pre-trained weights of a word as a large string.
+     */
     private void placeInWeightslist(String weight) {
         String[] str = weight.split(" ");
 

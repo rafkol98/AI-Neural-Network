@@ -25,7 +25,7 @@ public class Sequential implements Layer, java.io.Serializable {
 
 
     /**
-     * Make a copy of Sequential.
+     * Make a deep copy of Sequential.
      * @param net
      */
     public Sequential(Sequential net) {

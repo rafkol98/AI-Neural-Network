@@ -16,7 +16,6 @@ import java.util.List;
 public class VocabClassifier {
 
     private boolean verbose;
-    private boolean tuning = false;
 
     public VocabClassifier(boolean verbose) {
         this.verbose = verbose;
@@ -34,7 +33,6 @@ public class VocabClassifier {
      * @return
      */
     public double tuningProcess(Sequential net, VocabDataset trainset, VocabDataset devset, double learningRate, int maxEpochs, int patience) {
-        tuning = true;
         CrossEntropy loss = new CrossEntropy();
         Optimizer sgd = new SGD(net, learningRate);
 
@@ -207,12 +205,10 @@ public class VocabClassifier {
         // calculate training duration - divide by 10^-9 to convert ns to seconds.
         long trainingDuration = (endTime - startTime) / 1000000000;
 
-        if ((tuning && verbose) || (!tuning)) {
-            System.out.println("\ntraining is finished");
-            System.out.println("Best Training Accuracy: " + Collections.max(trainingAccuracies));
-            System.out.println("Best Validation Accuracy: " + Collections.max(validationAccuracies));
-            System.out.println("Total training time: " + trainingDuration + " seconds");
-        }
+        System.out.println("\ntraining is finished");
+        System.out.println("Best Training Accuracy: " + Collections.max(trainingAccuracies));
+        System.out.println("Best Validation Accuracy: " + Collections.max(validationAccuracies));
+        System.out.println("Total training time: " + trainingDuration + " seconds");
 
         // return best validation accuracy - used for hyperparameter tuning.
         return Collections.max(validationAccuracies);
