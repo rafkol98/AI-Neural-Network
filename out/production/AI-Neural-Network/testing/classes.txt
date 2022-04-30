@@ -1,0 +1,7 @@
+ENTY:other
+ENTY:food
+DESC:desc
+ENTY:product
+HUM:ind
+NUM:count
+DESC:manner

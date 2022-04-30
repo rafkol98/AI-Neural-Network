@@ -59,8 +59,8 @@ public class A4Main {
         }
         // Otherwise they have size of 100 and 200.
         else {
-            hiddimsEmbedding = 2;
-            hiddimsOthers = 3;
+            hiddimsEmbedding = 100;
+            hiddimsOthers = 200;
         }
 
         // Hyperparameters.
@@ -199,5 +199,8 @@ public class A4Main {
             default:
                 System.out.println("Please select part1, part2, part3, part4 or part 5.");
         }
+
+
+
     }
 }

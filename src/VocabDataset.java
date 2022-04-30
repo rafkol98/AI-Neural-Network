@@ -53,7 +53,6 @@ public class VocabDataset extends Dataset<double[], Integer> {
     public void fromFile(String path) throws IOException {
         items = new ArrayList<Pair<double[], Integer>>();
 
-        System.out.println("path: "+path);
         // get the number of instances (elements) and number of features.
         int instances = countLinesInFile(path, trainingWeights, false);
         inputDims = countLinesInFile(pathVocabulary, trainingWeights, true);

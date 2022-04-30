@@ -1,0 +1,5 @@
+README
+
+This file contains the .ipynb file where I have done the preprocessing for the embedding words using spacy which uses vectors from words2vec. I used the spacy library to efficiently get the vector weight embeddings for all the words in our vocabulary, without having to download and use the whole words2vec enormous dataset. This saved me a lot of time and computer memory.
+
+The vocab_word2vec.txt file contains the exported vocabulary with the new weights (from words2vec) - in an identical format as the vocab provided for Glove. The only exception is that this has 300 dimensions instead of 100.
