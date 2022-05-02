@@ -14,16 +14,20 @@ public class HyperparameterTuning {
     private List<Integer> patienceToTry;
     private VocabClassifier vocabClassifier;
     private int indims, hiddimsEmbedding, hiddimsOthers, outdims;
+    private boolean linearNetwork;
+
 
 
     /**
      * Create a new hyperparameter tuning instance.
      *
+     * @param linearNetwork if the network is using a linear layer for the first hidden network.
      * @param learningRatesToTry
      * @param maxEpochsToTry
      * @param patienceToTry
      */
-    public HyperparameterTuning(int indims, int hiddimsEmbedding, int hiddimsOthers, int outdims, VocabClassifier vocabClassifier, List<Double> learningRatesToTry, List<Integer> maxEpochsToTry, List<Integer> patienceToTry) {
+    public HyperparameterTuning(boolean linearNetwork, int indims, int hiddimsEmbedding, int hiddimsOthers, int outdims, VocabClassifier vocabClassifier, List<Double> learningRatesToTry, List<Integer> maxEpochsToTry, List<Integer> patienceToTry) {
+        this.linearNetwork = linearNetwork;
         this.indims = indims;
         this.hiddimsEmbedding = hiddimsEmbedding;
         this.hiddimsOthers = hiddimsOthers;
@@ -40,7 +44,7 @@ public class HyperparameterTuning {
      *
      * @param iterations
      */
-    public void randomizedSearch(int iterations, VocabDataset trainset, VocabDataset devset, VocabDataset testset, boolean verbose) {
+    public void randomizedSearch(int iterations, VocabDataset trainset, VocabDataset devset) {
         // Store the best validation accuracy found so far.
         double bestAccuracy = 0;
 
@@ -62,9 +66,8 @@ public class HyperparameterTuning {
             int randomPatience = patienceToTry.get(getRandomIndex(patienceToTry.size()));
 
             System.out.println("\nIteration: " + i);
-//            if (verbose) {
+
             System.out.println("HYPER-PARAMETERS CHOSEN:\nlearningRate: " + randomLearningRate + ", maxEpochs: " + randomMaxEpochs + ", patience: " + randomPatience);
-//            }
             // Get best validation accuracy of the network using the randomly selected hyperparameter values.
             double valAcc = vocabClassifier.tuningProcess(net, trainset, devset, randomLearningRate, randomMaxEpochs, randomPatience);
 
@@ -78,10 +81,8 @@ public class HyperparameterTuning {
             }
         }
 
-        Sequential finalNet = createNewNetwork();
         System.out.println("\n\nFINISHED TUNING");
         System.out.println("BEST HYPER-PARAMETERS FOUND \n learningRate: " + learningRateOnBestResult + ", maxEpochs: " + maxEpochsOnBestResult + ", patience: " + patienceOnBestResult);
-        vocabClassifier.trainAndEval(finalNet, trainset, devset, testset, learningRateOnBestResult, maxEpochsOnBestResult, patienceOnBestResult);
     }
 
     public int getRandomIndex(int listSize) {
@@ -90,19 +91,38 @@ public class HyperparameterTuning {
 
 
     public Sequential createNewNetwork() {
-        Sequential newNet = new Sequential(new Layer[]{
-                // Input to first hidden layer (Embedding bag).
-                new EmbeddingBag(indims, hiddimsEmbedding, new WeightInitXavier()),
-                new ReLU(),
-                // first to second hidden layer.
-                new Linear(hiddimsEmbedding, hiddimsOthers, new WeightInitXavier()),
-                new ReLU(),
-                // second to third hidden layer.
-                new Linear(hiddimsOthers, hiddimsOthers, new WeightInitXavier()),
-                new ReLU(),
-                // third hidden layer to output.
-                new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
-                new Softmax()});
+        Sequential newNet;
+
+        if (linearNetwork) {
+            newNet = new Sequential(new Layer[]{
+                    // Input to first hidden layer.
+                    new Linear(indims, hiddimsEmbedding, new WeightInitXavier()),
+                    new ReLU(),
+                    // first to second hidden layer.
+                    new Linear(hiddimsEmbedding, hiddimsOthers, new WeightInitXavier()),
+                    new ReLU(),
+                    // second to third hidden layer.
+                    new Linear(hiddimsOthers, hiddimsOthers, new WeightInitXavier()),
+                    new ReLU(),
+                    // third hidden layer to output.
+                    new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
+                    new Softmax()});
+        } else {
+            newNet = new Sequential(new Layer[]{
+                    // Input to first hidden layer (Embedding bag).
+                    new EmbeddingBag(indims, hiddimsEmbedding, new WeightInitXavier()),
+                    new ReLU(),
+                    // first to second hidden layer.
+                    new Linear(hiddimsEmbedding, hiddimsOthers, new WeightInitXavier()),
+                    new ReLU(),
+                    // second to third hidden layer.
+                    new Linear(hiddimsOthers, hiddimsOthers, new WeightInitXavier()),
+                    new ReLU(),
+                    // third hidden layer to output.
+                    new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
+                    new Softmax()});
+        }
+
 
         return newNet;
     }

@@ -104,22 +104,48 @@ public class A4Main {
             }
         }
 
-        // Hyperparameter tuning - EXTENSION.
-        HyperparameterTuning hyperparameterTuning;
+        // variables used for hyperparameter tuning.
+        List<Double> learningRatesToTry = new ArrayList<>();
+        List<Integer> maxEpochsToTry = new ArrayList<>();
+        List<Integer> patienceToTry = new ArrayList<>();
+        int iterations = 1;
 
         // Arraylists containing values to try in Hyperparameter tuning.
-        List<Double> learningRatesToTry = Arrays.asList(0.0001, 0.001, 0.01, 0.1, 0.5, 1.0);
-        List<Integer> maxEpochsToTry = Arrays.asList(100, 200, 300, 500, 1000);
-        List<Integer> patienceToTry = Arrays.asList(5, 10, 15, 20);
+        if (tune) {
+            Scanner scanner = new Scanner(System.in);
+            System.out.println("\nEnter LEARNING_RATE values to try - Separate them with a space");
+            while(scanner.hasNextDouble()) {
+                learningRatesToTry.add(scanner.nextDouble());
+            }
+            System.out.println("LEARNING RATES TO TRY: " + learningRatesToTry);
 
+            System.out.println("\nEnter MAX_EPOCHS to try - Separate them with a space");
+            while(scanner.hasNextInt()) {
+                maxEpochsToTry.add(scanner.nextInt());
 
-        GradientChecker gradientChecker = new GradientChecker();
+            }
+            System.out.println("MAX EPOCHS TO TRY: " + maxEpochsToTry);
+
+            System.out.println("\nEnter PATIENCE values to try - Separate them with a space");
+            while(scanner.hasNextInt()) {
+                patienceToTry.add(scanner.nextInt());
+
+            }
+            System.out.println("PATIENCE TO TRY: " + patienceToTry);
+
+//            System.out.println("\nEnter NUMBER OF ITERATIONS");
+//            iterations = scanner.nextInt();
+        }
+
         VocabClassifier vocabClassifier = new VocabClassifier(verbose);
 
         // TODO: redundant - make it all the same.
         CrossEntropy loss = new CrossEntropy();
         switch (args[0]) {
             case "part1":
+                if (tune) {
+                    performHyperparameterTuning(true, trainset, devset, indims, hiddimsEmbedding, hiddimsOthers, outdims, vocabClassifier, learningRatesToTry, maxEpochsToTry, patienceToTry, iterations);
+                } else {
                     net = new Sequential(new Layer[]{
                             // Input to first hidden layer.
                             new Linear(indims, hiddimsEmbedding, new WeightInitXavier()),
@@ -134,73 +160,72 @@ public class A4Main {
                             new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
                             new Softmax()});
 
-                    //TODO: function it.
-                if (!tune) {
                     vocabClassifier.trainAndEval(net, trainset, devset, testset, learningRate, maxEpochs, patience);
-                } else {
-                    // perform hyperparameter tuning using randomized search method.
-                    hyperparameterTuning = new HyperparameterTuning(indims, hiddimsEmbedding, hiddimsOthers, outdims, vocabClassifier, learningRatesToTry, maxEpochsToTry, patienceToTry);
-                    hyperparameterTuning.randomizedSearch(30, trainset, devset, testset, verbose);
                 }
-
                 break;
 
             case "part2":
-                net = new Sequential(new Layer[]{
-                        // Input to first hidden layer (Embedding bag).
-                        new EmbeddingBag(indims, hiddimsEmbedding, new WeightInitXavier()),
-                        new ReLU(),
-                        // first to second hidden layer.
-                        new Linear(hiddimsEmbedding, hiddimsOthers, new WeightInitXavier()),
-                        new ReLU(),
-                        // second to third hidden layer.
-                        new Linear(hiddimsOthers, hiddimsOthers, new WeightInitXavier()),
-                        new ReLU(),
-                        // third hidden layer to output.
-                        new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
-                        new Softmax()});
-
-                if (!tune) {
-                    vocabClassifier.trainAndEval(net, trainset, devset, testset, learningRate, maxEpochs, patience);
+                if (tune) {
+                    performHyperparameterTuning(false, trainset, devset, indims, hiddimsEmbedding, hiddimsOthers, outdims, vocabClassifier, learningRatesToTry, maxEpochsToTry, patienceToTry, iterations);
                 } else {
-                    // perform hyperparameter tuning using randomized search method.
-                    hyperparameterTuning = new HyperparameterTuning(indims, hiddimsEmbedding, hiddimsOthers, outdims, vocabClassifier, learningRatesToTry, maxEpochsToTry, patienceToTry);
-                    hyperparameterTuning.randomizedSearch(30, trainset, devset, testset, verbose);
+                    net = new Sequential(new Layer[]{
+                            // Input to first hidden layer (Embedding bag).
+                            new EmbeddingBag(indims, hiddimsEmbedding, new WeightInitXavier()),
+                            new ReLU(),
+                            // first to second hidden layer.
+                            new Linear(hiddimsEmbedding, hiddimsOthers, new WeightInitXavier()),
+                            new ReLU(),
+                            // second to third hidden layer.
+                            new Linear(hiddimsOthers, hiddimsOthers, new WeightInitXavier()),
+                            new ReLU(),
+                            // third hidden layer to output.
+                            new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
+                            new Softmax()});
+
+
+                    vocabClassifier.trainAndEval(net, trainset, devset, testset, learningRate, maxEpochs, patience);
+
                 }
+
                 break;
 
             case "part3":
             case "part4":
             case "part5":
-                net = new Sequential(new Layer[]{
-                        // Input to first hidden layer (Embedding bag). Use pretrained weights.
-                        // Decide whether to freeze them or not using the freeze flag.
-                        new EmbeddingBag(indims, hiddimsEmbedding, pretrainedWeights, freeze),
-                        new ReLU(),
-                        // first to second hidden layer.
-                        new Linear(hiddimsEmbedding, hiddimsOthers, new WeightInitXavier()),
-                        new ReLU(),
-                        // second to third hidden layer.
-                        new Linear(hiddimsOthers, hiddimsOthers, new WeightInitXavier()),
-                        new ReLU(),
-                        // third hidden layer to output.
-                        new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
-                        new Softmax()});
-
-                if (!tune) {
-                    vocabClassifier.trainAndEval(net, trainset, devset, testset, learningRate, maxEpochs, patience);
+                if (tune) {
+                    performHyperparameterTuning(false, trainset, devset, indims, hiddimsEmbedding, hiddimsOthers, outdims, vocabClassifier, learningRatesToTry, maxEpochsToTry, patienceToTry, iterations);
                 } else {
-                    // perform hyperparameter tuning using randomized search method.
-                    hyperparameterTuning = new HyperparameterTuning(indims, hiddimsEmbedding, hiddimsOthers, outdims, vocabClassifier, learningRatesToTry, maxEpochsToTry, patienceToTry);
-                    hyperparameterTuning.randomizedSearch(30, trainset, devset, testset, verbose);
+                    net = new Sequential(new Layer[]{
+                            // Input to first hidden layer (Embedding bag). Use pretrained weights.
+                            // Decide whether to freeze them or not using the freeze flag.
+                            new EmbeddingBag(indims, hiddimsEmbedding, pretrainedWeights, freeze),
+                            new ReLU(),
+                            // first to second hidden layer.
+                            new Linear(hiddimsEmbedding, hiddimsOthers, new WeightInitXavier()),
+                            new ReLU(),
+                            // second to third hidden layer.
+                            new Linear(hiddimsOthers, hiddimsOthers, new WeightInitXavier()),
+                            new ReLU(),
+                            // third hidden layer to output.
+                            new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
+                            new Softmax()});
+
+                    vocabClassifier.trainAndEval(net, trainset, devset, testset, learningRate, maxEpochs, patience);
                 }
                 break;
 
             default:
                 System.out.println("Please select part1, part2, part3, part4 or part 5.");
         }
+    }
 
-
-
+    /**
+     * Perform hyperparamer tuning - Extension.
+     *
+     */
+    public static void performHyperparameterTuning(boolean linearNetwork, VocabDataset trainset, VocabDataset devset, int indims, int hiddimsEmbedding, int hiddimsOthers, int outdims, VocabClassifier vocabClassifier,  List<Double> learningRatesToTry, List<Integer> maxEpochsToTry, List<Integer> patienceToTry, int iterations) {
+        // perform hyperparameter tuning using randomized search method.
+        HyperparameterTuning hyperparameterTuning = new HyperparameterTuning(linearNetwork, indims, hiddimsEmbedding, hiddimsOthers, outdims, vocabClassifier, learningRatesToTry, maxEpochsToTry, patienceToTry);
+        hyperparameterTuning.randomizedSearch(iterations, trainset, devset);
     }
 }
