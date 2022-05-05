@@ -203,9 +203,9 @@ public class A4Main {
     public static void getScannerInputValues() {
         System.out.println("-----------------------HYPERPARAMETER TUNING INPUT-----------------------");
         Scanner scanner = new Scanner(System.in);
-        System.out.println("\nEnter LEARNING_RATE values to try - Separate them with a space");
+        System.out.println("\nEnter LEARNING_RATE values to try (DOUBLE values) - Separate them with a space");
         String learningRatesString = scanner.nextLine();
-
+        try {
         // Convert string input into an arralyist of doubles.
         learningRatesToTry = Stream.of(learningRatesString).map(s -> s.split(" "))
                 .flatMap((Function<String[], Stream<Double>>) strings -> Stream.of(strings).map(Double::parseDouble))
@@ -213,7 +213,7 @@ public class A4Main {
 
         System.out.println("LEARNING RATES TO TRY: " + learningRatesToTry);
 
-        System.out.println("\nEnter MAX_EPOCHS to try - Separate them with a space");
+        System.out.println("\nEnter MAX_EPOCHS to try (INTEGER values) - Separate them with a space");
         String maxEpochsString = scanner.nextLine();
 
         // Convert string input into an arralyist of doubles.
@@ -223,7 +223,7 @@ public class A4Main {
 
         System.out.println("MAX EPOCHS TO TRY: " + maxEpochsToTry);
 
-        System.out.println("\nEnter PATIENCE values to try - Separate them with a space");
+        System.out.println("\nEnter PATIENCE values to try (INTEGER values) - Separate them with a space");
         String patienceString = scanner.nextLine();
 
         // Convert string input into an arralyist of doubles.
@@ -233,10 +233,14 @@ public class A4Main {
 
         System.out.println("PATIENCE TO TRY: " + patienceToTry);
 
-        System.out.println("\nEnter NUMBER OF ITERATIONS");
+        System.out.println("\nEnter NUMBER OF ITERATIONS (INTEGER value)");
         iterations = scanner.nextInt();
 
         System.out.println("-------------------------------------------------------");
+        } catch (Exception e) {
+            System.out.println("\nSYSTEM EXITED: Please follow the instructions on the number format (Integer or Double) for each hyperparameter.");
+            System.exit(1);
+        }
     }
 
     /**
