@@ -65,7 +65,7 @@ public class HyperparameterTuning {
             int randomMaxEpochs = maxEpochsToTry.get(getRandomIndex(maxEpochsToTry.size()));
             int randomPatience = patienceToTry.get(getRandomIndex(patienceToTry.size()));
 
-            System.out.println("\nIteration: " + i);
+            System.out.println("\nITERATION: " + i);
 
             System.out.println("HYPER-PARAMETERS CHOSEN:\nlearningRate: " + randomLearningRate + ", maxEpochs: " + randomMaxEpochs + ", patience: " + randomPatience);
             // Get best validation accuracy of the network using the randomly selected hyperparameter values.
@@ -81,7 +81,8 @@ public class HyperparameterTuning {
             }
         }
 
-        System.out.println("\n\nFINISHED TUNING");
+        System.out.println("-------------------------------------------------------");
+        System.out.println("\nFINISHED TUNING");
         System.out.println("BEST HYPER-PARAMETERS FOUND \n learningRate: " + learningRateOnBestResult + ", maxEpochs: " + maxEpochsOnBestResult + ", patience: " + patienceOnBestResult);
     }
 

@@ -199,6 +199,7 @@ public class A4Main {
         }
     }
 
+    //TODO: catch exceptions.
     public static void getScannerInputValues() {
         System.out.println("-----------------------HYPERPARAMETER TUNING INPUT-----------------------");
         Scanner scanner = new Scanner(System.in);
