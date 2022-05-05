@@ -14,12 +14,19 @@ import org.jblas.util.Logger;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import src.EmbeddingBag;
 
 public class A4Main {
 
-    //TODO: maybe move the train and eval methods to another class.
+    // variables used for hyperparameter tuning.
+    private static List<Double> learningRatesToTry;
+    private static List<Integer> maxEpochsToTry = new ArrayList<>();
+    private static List<Integer> patienceToTry = new ArrayList<>();
+    private static int iterations = 1;
 
     /**
      * Example A4Main class. Feel free to edit this file
@@ -104,37 +111,10 @@ public class A4Main {
             }
         }
 
-        // variables used for hyperparameter tuning.
-        List<Double> learningRatesToTry = new ArrayList<>();
-        List<Integer> maxEpochsToTry = new ArrayList<>();
-        List<Integer> patienceToTry = new ArrayList<>();
-        int iterations = 1;
 
         // Arraylists containing values to try in Hyperparameter tuning.
         if (tune) {
-            Scanner scanner = new Scanner(System.in);
-            System.out.println("\nEnter LEARNING_RATE values to try - Separate them with a space");
-            while(scanner.hasNextDouble()) {
-                learningRatesToTry.add(scanner.nextDouble());
-            }
-            System.out.println("LEARNING RATES TO TRY: " + learningRatesToTry);
-
-            System.out.println("\nEnter MAX_EPOCHS to try - Separate them with a space");
-            while(scanner.hasNextInt()) {
-                maxEpochsToTry.add(scanner.nextInt());
-
-            }
-            System.out.println("MAX EPOCHS TO TRY: " + maxEpochsToTry);
-
-            System.out.println("\nEnter PATIENCE values to try - Separate them with a space");
-            while(scanner.hasNextInt()) {
-                patienceToTry.add(scanner.nextInt());
-
-            }
-            System.out.println("PATIENCE TO TRY: " + patienceToTry);
-
-//            System.out.println("\nEnter NUMBER OF ITERATIONS");
-//            iterations = scanner.nextInt();
+            getScannerInputValues();
         }
 
         VocabClassifier vocabClassifier = new VocabClassifier(verbose);
@@ -219,11 +199,49 @@ public class A4Main {
         }
     }
 
+    public static void getScannerInputValues() {
+        System.out.println("-----------------------HYPERPARAMETER TUNING INPUT-----------------------");
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("\nEnter LEARNING_RATE values to try - Separate them with a space");
+        String learningRatesString = scanner.nextLine();
+
+        // Convert string input into an arralyist of doubles.
+        learningRatesToTry = Stream.of(learningRatesString).map(s -> s.split(" "))
+                .flatMap((Function<String[], Stream<Double>>) strings -> Stream.of(strings).map(Double::parseDouble))
+                .collect(Collectors.toList());
+
+        System.out.println("LEARNING RATES TO TRY: " + learningRatesToTry);
+
+        System.out.println("\nEnter MAX_EPOCHS to try - Separate them with a space");
+        String maxEpochsString = scanner.nextLine();
+
+        // Convert string input into an arralyist of doubles.
+        maxEpochsToTry = Stream.of(maxEpochsString).map(s -> s.split(" "))
+                .flatMap((Function<String[], Stream<Integer>>) strings -> Stream.of(strings).map(Integer::parseInt))
+                .collect(Collectors.toList());
+
+        System.out.println("MAX EPOCHS TO TRY: " + maxEpochsToTry);
+
+        System.out.println("\nEnter PATIENCE values to try - Separate them with a space");
+        String patienceString = scanner.nextLine();
+
+        // Convert string input into an arralyist of doubles.
+        patienceToTry = Stream.of(patienceString).map(s -> s.split(" "))
+                .flatMap((Function<String[], Stream<Integer>>) strings -> Stream.of(strings).map(Integer::parseInt))
+                .collect(Collectors.toList());
+
+        System.out.println("PATIENCE TO TRY: " + patienceToTry);
+
+        System.out.println("\nEnter NUMBER OF ITERATIONS");
+        iterations = scanner.nextInt();
+
+        System.out.println("-------------------------------------------------------");
+    }
+
     /**
      * Perform hyperparamer tuning - Extension.
-     *
      */
-    public static void performHyperparameterTuning(boolean linearNetwork, VocabDataset trainset, VocabDataset devset, int indims, int hiddimsEmbedding, int hiddimsOthers, int outdims, VocabClassifier vocabClassifier,  List<Double> learningRatesToTry, List<Integer> maxEpochsToTry, List<Integer> patienceToTry, int iterations) {
+    public static void performHyperparameterTuning(boolean linearNetwork, VocabDataset trainset, VocabDataset devset, int indims, int hiddimsEmbedding, int hiddimsOthers, int outdims, VocabClassifier vocabClassifier, List<Double> learningRatesToTry, List<Integer> maxEpochsToTry, List<Integer> patienceToTry, int iterations) {
         // perform hyperparameter tuning using randomized search method.
         HyperparameterTuning hyperparameterTuning = new HyperparameterTuning(linearNetwork, indims, hiddimsEmbedding, hiddimsOthers, outdims, vocabClassifier, learningRatesToTry, maxEpochsToTry, patienceToTry);
         hyperparameterTuning.randomizedSearch(iterations, trainset, devset);
