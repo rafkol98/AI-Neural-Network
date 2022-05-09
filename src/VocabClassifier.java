@@ -24,12 +24,12 @@ public class VocabClassifier {
     /**
      * Train the model and return the best validation accuracy found. Used for randomizedSearch tuning procedure.
      *
-     * @param net
-     * @param trainset
-     * @param devset
-     * @param learningRate
-     * @param maxEpochs
-     * @param patience
+     * @param net the passed in network.
+     * @param trainset the training set.
+     * @param devset the development/validation set.
+     * @param learningRate the specified learning rate.
+     * @param maxEpochs the number of max epochs.
+     * @param patience the patience value.
      * @return
      */
     public double tuningProcess(Sequential net, VocabDataset trainset, VocabDataset devset, double learningRate, int maxEpochs, int patience) {
@@ -41,6 +41,17 @@ public class VocabClassifier {
     }
 
 
+    /**
+     * Train and evaluate the algorithm.
+     *
+     * @param net the passed in network.
+     * @param trainset the training set.
+     * @param devset the development/validation set.
+     * @param testset the testing set.
+     * @param learningRate the specified learning rate.
+     * @param maxEpochs the number of max epochs.
+     * @param patience the patience value.
+     */
     public void trainAndEval(Sequential net, VocabDataset trainset, VocabDataset devset, VocabDataset testset, double learningRate, int maxEpochs, int patience) {
         CrossEntropy loss = new CrossEntropy();
         Optimizer sgd = new SGD(net, learningRate);
@@ -81,8 +92,6 @@ public class VocabClassifier {
         DoubleMatrix Y = new DoubleMatrix(ys.length, 1, ys);
         return new Pair<DoubleMatrix, DoubleMatrix>(X, Y);
     }
-
-    //TODO: change!
 
     /**
      * calculate classification accuracy of an ANN for our NLP problem.

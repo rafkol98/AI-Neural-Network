@@ -56,7 +56,7 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
     }
 
     /**
-     * Forward pass
+     * Perform Forward pass of the Embedding Bag layer.
      *
      * @param input (List<int[]>) input for forward calculation
      * @return a [batchsize x outdims] matrix, each row is the output of a sample in the batch
@@ -81,6 +81,11 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
         return Y;
     }
 
+    /**
+     * Backward propagation of the EmbeddingBag layer.
+     * @param gY a [minibatch_size x output_dims] matrix, each row is dL/dY
+     * @return null
+     */
     @Override
     public DoubleMatrix backward(DoubleMatrix gY) {
         // if the layer is not frozen, then update the gradients of the weights.
@@ -102,6 +107,11 @@ public class EmbeddingBag implements Layer, java.io.Serializable {
                 }
             }
         }
+
+        //  Used for testing the frozen weights.
+        // else {
+        //     System.out.println("WEIGHT OF (ROW: 10, COLUMN: 10): "+W.get(10,10));
+        // }
 
         return null; // there is no need to compute gX as the previous layer of this one is the input layer of the network
     }

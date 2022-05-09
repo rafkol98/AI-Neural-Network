@@ -144,6 +144,9 @@ public class VocabDataset extends Dataset<double[], Integer> {
         allWeights.add(doubleValues);
     }
 
+    /**
+     * Create a double matrix to store the pretrained weights at.
+     */
     private void createDoubleMatrixForWeights() {
         double[][] xs = new double[allWeights.size()][];
 

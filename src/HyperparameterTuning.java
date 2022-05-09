@@ -16,8 +16,6 @@ public class HyperparameterTuning {
     private int indims, hiddimsEmbedding, hiddimsOthers, outdims;
     private boolean linearNetwork;
 
-
-
     /**
      * Create a new hyperparameter tuning instance.
      *
@@ -91,9 +89,14 @@ public class HyperparameterTuning {
     }
 
 
+    /**
+     * Create a new temporary network - used for tuning. If linear flag is true, has sparse matrix,
+     * otherwise uses the EmbeddingBag class.
+     * @return the new network created.
+     */
     public Sequential createNewNetwork() {
         Sequential newNet;
-
+        // use sparse matrix - linear layer as first hidden layer.
         if (linearNetwork) {
             newNet = new Sequential(new Layer[]{
                     // Input to first hidden layer.
@@ -108,7 +111,9 @@ public class HyperparameterTuning {
                     // third hidden layer to output.
                     new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
                     new Softmax()});
-        } else {
+        }
+        // Use EmbeddingBag as first hidden layer
+        else {
             newNet = new Sequential(new Layer[]{
                     // Input to first hidden layer (Embedding bag).
                     new EmbeddingBag(indims, hiddimsEmbedding, new WeightInitXavier()),
@@ -123,8 +128,6 @@ public class HyperparameterTuning {
                     new Linear(hiddimsOthers, outdims, new WeightInitXavier()),
                     new Softmax()});
         }
-
-
         return newNet;
     }
 

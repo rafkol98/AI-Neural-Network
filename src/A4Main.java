@@ -119,10 +119,10 @@ public class A4Main {
 
         VocabClassifier vocabClassifier = new VocabClassifier(verbose);
 
-        // TODO: redundant - make it all the same.
         CrossEntropy loss = new CrossEntropy();
         switch (args[0]) {
             case "part1":
+                // perform hyperparameter tuning if tune flag is true.
                 if (tune) {
                     performHyperparameterTuning(true, trainset, devset, indims, hiddimsEmbedding, hiddimsOthers, outdims, vocabClassifier, learningRatesToTry, maxEpochsToTry, patienceToTry, iterations);
                 } else {
@@ -145,6 +145,7 @@ public class A4Main {
                 break;
 
             case "part2":
+                // perform hyperparameter tuning if tune flag is true.
                 if (tune) {
                     performHyperparameterTuning(false, trainset, devset, indims, hiddimsEmbedding, hiddimsOthers, outdims, vocabClassifier, learningRatesToTry, maxEpochsToTry, patienceToTry, iterations);
                 } else {
@@ -164,14 +165,13 @@ public class A4Main {
 
 
                     vocabClassifier.trainAndEval(net, trainset, devset, testset, learningRate, maxEpochs, patience);
-
                 }
-
                 break;
 
             case "part3":
             case "part4":
             case "part5":
+                // perform hyperparameter tuning if tune flag is true.
                 if (tune) {
                     performHyperparameterTuning(false, trainset, devset, indims, hiddimsEmbedding, hiddimsOthers, outdims, vocabClassifier, learningRatesToTry, maxEpochsToTry, patienceToTry, iterations);
                 } else {
@@ -199,7 +199,9 @@ public class A4Main {
         }
     }
 
-    //TODO: catch exceptions.
+    /**
+     * Get the scanner input values for each hyperparameter - Extension.
+     */
     public static void getScannerInputValues() {
         System.out.println("-----------------------HYPERPARAMETER TUNING INPUT-----------------------");
         Scanner scanner = new Scanner(System.in);
