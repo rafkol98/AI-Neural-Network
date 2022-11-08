@@ -2,8 +2,7 @@
 Natural Language Processing (NLP) is an important area of Artificial Intelligence with several
 real-world applications. In recent years, Deep Learning has become a widely used approach for
 NLP problems due to its ability to gain superior performance on various NLP tasks compared to
-traditional NLP solving approaches. In this practical, I aimed to tackle a classic NLP problem
-- the question classification problem. 
+traditional NLP solving approaches. In this practical, the aim was to tackle a classic NLP problem: the question classification problem. 
 
 Given a question, the goal is to identify what the topic of the question is, e.g., whether it is about food, or a place, or an animal, etc.
 
